@@ -1,0 +1,378 @@
+MB1SDR - receptor SDR com o painel de um transceptor de HF/VHF de mesa (Windows 7, 8, 10 e 11)
+=============================================================================================
+
+NAO PRECISA INSTALAR. Descompacte esta pasta onde quiser (Area de Trabalho,
+Documentos, pendrive...) e de dois cliques em MB1SDR.exe.
+
+- A tela e o painel frontal de um transceptor SDR no estilo do MB1 (sem a
+  marca do fabricante; "MB1SDR" dourado no lugar da placa): a coluna da
+  esquerda (POWER, TX/TUN, MUT/MON, AGC/ATT, PA/ANT, PHONES, MIC), a tela com o
+  S-meter de ponteiro, as duas frequencias, os indicadores, o espectro verde e a
+  cachoeira azul, o teclado de bandas, o dial grande, os quatro botoes duplos,
+  as teclas F1 ... F21 e o MULTI 3.
+- A tela do radio ja tem o espectro e a cachoeira (nao ha cachoeira separada).
+  A largura do escopo vai de 0,25 a 3,2 MSPS: tecla de toque SPAN (F6) ou o
+  "SR:" da linha de informacoes; Z+ / Z- dao o zoom.
+- Cada botao faz a funcao do radio. Os de transmissao (num receptor nao servem)
+  ganharam funcoes de recepcao. PARE O MOUSE EM CIMA DE QUALQUER BOTAO: a dica
+  diz exatamente o que ele faz.
+- A configuracao fica no arquivo MB1SDR.ini, ao lado do programa. Para levar
+  para outro PC, copie a pasta inteira.
+- Aparelhos: RTL-SDR (USB), RTL-TCP (rede) e SDRplay.
+- ADS-B pela rede: em MENU > Configuracao, "ADS-B pela rede (outro
+  receptor)", ligue "Receber pela rede interna (Feeder)" e digite o IP e a porta Beast de
+  outro receptor de avioes da sua rede (FlightAware/PiAware, dump1090,
+  readsb, FR24...; a porta e quase sempre 30005). O MB1SDR so le, como os
+  programas que mandam para os sites, e nao muda nada no aparelho.
+
+RTL-SDR: o driver WinUSB tem de estar instalado com o Zadig (vem na pasta
+Drivers, passo a passo no COMO_INSTALAR_DRIVER.txt), igual ao SDR#.
+SDRplay: instale a API oficial da SDRplay (www.sdrplay.com/api).
+As DLLs (rtlsdr.dll, libusb-1.0.dll, pthreadVC2.dll, msvcr100.dll,
+vcruntime140.dll) ja vem nesta pasta.
+
+Primeiro uso
+ 1. Abra o MB1SDR.exe.
+ 2. Aperte ANT (coluna da esquerda) (ou MENU > Configuracao) e escolha o
+    aparelho: RTL-SDR, RTL-TCP (IP e porta do rtl_tcp) ou SDRplay.
+ 3. Aperte POWER (em cima, a esquerda; o simbolo fica vermelho aceso e o LED
+    verde acende com o radio ligado).
+
+Como mexer
+ - Teclas: clique. Muitas tem segunda funcao: segure meio segundo.
+ - SHIFT (clique na tecla WF, ou no LED SHIFT): os botoes duplos fazem a
+   funcao de baixo do rotulo (VOX/COMP, TNF.P/TNF.W, NB1/NB2) e as teclas de
+   toque mudam de pagina (letras laranja). Clique de novo para voltar.
+ - Botoes duplos: o miolo e um controle, a saia de fora e outro. Arraste para
+   cima/direita (aumenta) ou use a roda do mouse em cima do miolo ou da saia.
+ - Dial e MULTI 3: arraste girando em volta, ou roda do mouse em cima. Girar
+   o dial rapido acelera.
+ - Frequencias da tela: roda do mouse em cima de um digito muda aquele digito.
+   Clique na grande (a que se ouve) = digitar a frequencia (kHz, Enter).
+   Clique na pequena (o outro VFO) = passa a ouvir aquele.
+ - Indicadores da tela (RIT, XIT, COMP, SQL, VOX, MUTE, R.EQ, NR, ANF, NB1...):
+   clique liga / desliga a funcao; acesos = ligados.
+ - Escopo: clique sintoniza, arrastar move a faixa, roda do mouse anda um
+   passo, botao direito = bandas. A regua (a faixa das frequencias, entre o
+   espectro e a cachoeira) e arrastavel: puxe para cima e a cachoeira cresce
+   (o espectro diminui), para baixo e o contrario; duplo clique volta ao padrao.
+   Vale na tela normal e no EXPAND (F1), cada um com a sua altura.
+ - Teclado do PC: digite a frequencia em kHz e Enter.
+ - Botao direito no painel = MENU.  F12 = captura da tela (pasta Capturas).
+ - Sem barra de titulo do Windows: arraste a tampa do radio para mover a janela;
+   minimizar / maximizar / fechar ficam na tampa, a direita.
+
+O painel, parte por parte
+ Coluna da esquerda
+   POWER ......... liga / desliga o radio (o dongle).
+   LEDs .......... o da esquerda acende com o radio ligado; o da direita com
+                   sinal no canal (squelch aberto).
+   TX ............ (num receptor) MUTE geral - silencia todo o audio.
+   TUN ........... AUTO: ajusta o espectro e a cachoeira sozinho.
+                   Segurar: guarda a aparencia atual como padrao.
+   MUT ........... silencia o receptor ouvido.
+   MON ........... enquanto segura, ouve o outro VFO (monitor).
+   AGC ........... FAST > MID > SLOW > OFF.
+   ATT ........... atenuador 0 / -6 / -12 / -18 dB.
+   PA ............ pre-amplificador OFF / AMP1 / AMP2 ("LNA" amarelo na tela).
+   ANT ........... o aparelho (abre a CONFIGURACAO).
+   USB ........... captura da tela (o mesmo que F12).
+   PHONES ........ a saida de som (placa / fone).
+   MIC 1 ......... grava o audio (pasta Gravacoes; o LED REC acende).
+   MIC 2 ......... toca a ultima gravacao.
+
+ A tela
+   Icones de cima: MENU, escopo na tela inteira, CONFIGURACAO e POWER.
+   SDR: .......... o aparelho em uso (clique: CONFIGURACAO).
+   S-meter ....... o ponteiro verde do VFO que se ouve; ele acompanha o audio.
+                   Clique: a leitura em S / dB / PEAK aparece na dica.
+   PA / LOCK / IQ  acendem com o pre-amplificador, o dial travado e o "tirar o
+                   DC do centro" (clique no IQ liga / desliga).
+   HF RX / HF TX . a faixa (HF, VHF, UHF), o VFO ouvido (A1 / B1) e o marcado
+                   como TX (SPLIT). PRMP: o pre-amplificador (ou o ATT).
+   RX / TX / TUNE  RX = ligado (clique desliga); TX = MUTE geral; TUNE = AUTO.
+   AGC: .......... clique troca.  MODE (a caixa verde, ou F5): escolhe LSB, USB, CW,
+                   AM, FM, WFM e os digitais.
+   Frequencias ... a grande e a do VFO ouvido; a da direita, a do outro VFO.
+   Indicadores ... RIT, XIT, COMP (compressor), SQL, VOX (squelch automatico),
+                   MUTE, R.EQ (equalizacao), T.EQ (TIMER), Sub RX (o escopo do
+                   VFO-B), SPLIT, BIN (BC - varios apitos), NR (redutor
+                   espectral), ANF (notch automatico), APF (pico de audio do CW),
+                   DSE (NR1), NB1, NB2, NF (notch manual), STEREO (acende no WFM).
+   Linha de baixo  STEP (clique escolhe o passo), FLTR (largura do filtro,
+                   clique escolhe), RF e VOL (roda do mouse em cima muda),
+                   CPU, SR (a taxa = largura do escopo, clique escolhe ate
+                   3,2 MSPS), SQL e a leitura do S-meter (ou o tom do CW).
+   Escopo ........ espectro verde com a coluna de dB e o nome da banda, a regua
+                   e a cachoeira azul. Com Sub RX (SUB RX / RX2) o do VFO-B fica
+                   ao lado (clique sintoniza o B, duplo clique passa a ouvi-lo).
+   Teclas de toque (iguais as F1 ... F10 embaixo da tela)
+     Pagina 1: EXPAND (o espectro e a cachoeira crescem juntos e ocupam a tela;
+               de novo: volta), BS (bandas e cobertura geral), <QMEM e
+               QMEM> (memorias rapidas; segurar grava), MODE (LSB, USB, CW, AM, FM, WFM e os digitais),
+               SPAN (largura: 0,25 a 3,2 MSPS e o zoom), EiBi (lista de
+               memorias / radiodifusao no ar), DECOD (decodificadores),
+               alto-falante (MUTE) e teclado (digitar a frequencia).
+     Pagina 2 (SHIFT): AUTO, HOLD, CENTER, IF (zoom de 20 kHz), RADAR (radar
+               aereo), SAT (satelites), FULL (escopo na tela inteira), REC,
+               PLAY e MENU.
+
+ O teclado do meio
+   160/1 ... 2/0 . bandas de 160 m a 6 m e 2 m (volta onde estava na banda).
+                   Digitando a frequencia (ENT ou segurar a tecla) sao os numeros.
+   ENT ........... comeca / confirma a frequencia digitada (kHz).
+   REC / PLAY .... grava o audio / toca a ultima gravacao (segurar: para).
+   M.IN / M.RD .. grava nas memorias / o dial passa os canais de memoria.
+   MD / MU ....... memoria anterior / proxima.
+   FD / FU ....... desce / sobe um passo (segurar: 100 kHz).
+   LEDs .......... REC (gravando), IND1 (sinal no canal), IND2 (decodificador
+                   aberto), SHIFT.
+   NR / ESC ...... redutor espectral (segurar: NR1); digitando = cancela.
+   NB1 / DEL ..... apagador de pulsos; digitando = apaga tudo.
+   NB2 ........... apagador no IQ; digitando = apaga o ultimo numero.
+   ANF ........... notch automatico.   TNF ... notch manual (segurar: CONT).
+   BIN ........... BC (cancelador de varios apitos).
+   SUB ........... o VFO-B anda junto quando se gira o dial (DUAL-W).
+   A>B / A<B ..... copia um VFO para o outro.   A<>B ... troca os dois.
+   TX B .......... marca o VFO-B como TX.   SPLT ... SPLIT (segurar: +5 kHz).
+   RX2 (canto) ... liga / desliga o escopo do VFO-B ao lado (LED verde).
+   A/B (canto) ... o dial e o som passam para o outro VFO (segurar: troca A e B).
+   LOCK (canto) .. trava o dial.   D/I (canto) ... passo do dial (segurar: FAST).
+   Dial .......... sintoniza o VFO ouvido.
+
+ O lado direito
+   MIC/SPD-DRIVE . miolo = velocidade da cachoeira; saia = LEVEL do escopo.
+     com SHIFT ... VOX = margem do squelch automatico; COMP = forca do
+                   compressor.
+   AF-RF ......... miolo = volume; saia = ganho de RF do dongle.
+   MON-SQL ....... (MULTI 1) miolo = tonalidade do audio; saia = squelch.
+     com SHIFT ... TNF.P = posicao do notch manual; TNF.W = estreito / largo.
+   SHIFT-WIDTH ... (MULTI 2) miolo = desloca o filtro; saia = largura.
+     com SHIFT ... NB1 / NB2 = nivel dos apagadores de pulsos.
+   MIC (F11) ..... fala a frequencia (voz do Windows).
+   CMP (F12) ..... compressor do audio.   VOX (F13) ... squelch automatico.
+   SQL (F14) ..... liga / desliga o squelch.   R.EQ (F15) ... equalizacao.
+   T.EQ (F16) .... TIMER (desligar depois de um tempo).
+   IQ (F17) ...... tirar o risco do DC do centro.   XVTR (F18) ... conversor.
+   STEP (F19) .... passo.   Z+ / Z- (F20 / F21) ... zoom do escopo.
+   WF / SHIFT .... clique = SHIFT; segurar = aparencia da cachoeira (cores,
+                   LEVEL, CONTRAST, velocidade).
+   RIT / XIT ..... deslocamento da escuta do VFO ouvido / do outro (o MULTI 3
+                   gira; segurar zera). LEDs em cima.
+   RX2 ........... passa a ouvir o VFO-B (de novo: volta ao A).
+   MULTI 3 ....... com RIT / XIT ligado gira o RIT / XIT; senao a funcao
+                   escolhida (clique: LEVEL, SPEED, CONTRAST, MEM CH, DNR, NB, AF...).
+
+Decodificadores: tecla de toque DECOD (F8), MENU > Decodificadores digitais,
+ou o modo (clique no modo verde da tela).
+
+FT8 e FT4 (DECODE > FT8) - So recepcao, em USB. Escolha a banda na lista (40 m = 7074 kHz, 20 m =
+   14074 kHz...) ou ja esteja numa banda de radioamador: o radio vai sozinho
+   para a frequencia do FT8 dela.
+ - A lista sai no fim de cada periodo de 15 s (FT4: 7,5 s): hora UTC, dB
+   (SNR, como no WSJT-X), DT, Hz e a mensagem. CQ em verde. "So CQ" e a
+   busca filtram; Copiar e Salvar .txt levam tudo.
+ - O RELOGIO DO PC PRECISA ESTAR CERTO (erro menor que 1 s). No Windows:
+   Configuracoes > Hora e idioma > Data e hora > Sincronizar agora. Se todos
+   os DT passarem de +1 s, o relogio esta adiantado; abaixo de -1 s, atrasado.
+
+OLIVIA (DECODE > OLIVIA)
+ - As frequencias de chamada do site oliviadigitalmode.org: 160 m (1839,0 e
+   1827,0 kHz), 80 m (3583,0), 40 m (7040,0 e 7072,5), 30 m (10143,0 e
+   10144,0), 20 m (14072,5 e 14108,5), 17 m (18099,0), 15 m (21072,5),
+   12 m (24922,5) e 10 m (28122,5) - com os tons 8/250 (o mais usado) e
+   32/1000. Escolha no combo "Canal": o radio vai sozinho em USB.
+ - O valor da lista e o CENTRO do sinal, e o centro fica 1500 Hz acima do
+   radio: por isso o radio sintoniza 1500 Hz ABAIXO (14072,5 kHz no centro =
+   14.071,0 MHz no radio), e o conjunto de tons (centrado em 1500 Hz no
+   audio) cai na parte alta da faixa USB, onde o decoder os espera.
+ - O TEXTO E DECODIFICADO AQUI (MFSK + FEC de Walsh-Hadamard, decisoes
+   moles) e sai na caixa de baixo da janela do decodificador. O desvio
+   (ate 125 Hz para cada lado), o instante dos simbolos e o inicio dos
+   blocos sao achados sozinhos, e so sai texto quando o sinal passa do
+   limiar (em ruido puro nao aparece lixo). Decodifica com o sinal uns
+   13 dB abaixo do ruido (8/250 e 16/500). Para transmitir use o FLdigi,
+   o Olivia do UA3AMO ou o MixW.
+ - Fechando a janela de decodificadores o RADIO VOLTA AO ESTADO ANTERIOR:
+   frequencia, modo e largura do filtro como estavam antes. (Isto vale
+   tambem para o RTTY, SITOR-B, DSC, ALE e PACTOR.)
+ - Nao entre nos 14073,5 kHz e acima: ali e a vez do FT8, JT65 e JT9.
+
+STANAG 4285 (DECODE > STANAG 4285)
+ - O modem da OTAN de portadora unica, o que as frotas navais (Franca,
+   Italia, Holanda, Noruega, Grecia, Turquia...) usam para trafego HF.
+   Velocidades 75, 150, 300, 600 e 1200 bps e o entrelacador LONGO (o das
+   estacoes, ~8 s de sinal antes do primeiro texto) ou CURTO (~1 s).
+ - A lista de frequencias e a tabela STANAG 4285 do autor (a partir de
+   3 MHz), com o pais e as velocidades de cada estacao; ha busca por
+   numero ou por nome ("8416" ou "franca").
+ - O valor da lista e o CENTRO do sinal: o radio fica 1800 Hz ABAIXO dele,
+   em USB com 3 kHz - assim os dados ficam centrados em 1800 Hz no audio,
+   onde o decoder os espera (mesma ideia do OLIVIA).
+ - O TEXTO E DECODIFICADO AQUI (equalizador adaptativo para o
+   multipercurso, Viterbi K=7 e o entrelacador da norma) e sai na caixa de
+   baixo. O desvio da portadora (ate 400 Hz para cada lado) e o relogio do
+   transmissor sao seguidos sozinhos; a linha de estado mostra o SNR.
+   Muito do trafego hoje e cifrado: voce vera letras sem sentido. Se o SNR
+   estiver bom e o texto nao fizer sentido, tente a outra velocidade
+   (600 x 1200) ou o outro entrelacador - em ITA2 sai texto mesmo errado.
+ - Fechando a janela de decodificadores o RADIO VOLTA AO ESTADO ANTERIOR.
+
+SELCAL (DECODE > SELCAL)
+ - A chamada seletiva dos avioes (ICAO Anexo 10): antes de falar com UM
+   aviao, a estacao de terra manda o codigo dele - dois pulsos de 1 s, cada
+   um com DOIS tons juntos, separados por 0,2 s (o "plim-plom"). So o aviao
+   com aquele codigo toca a campainha na cabine. O codigo tem 4 letras,
+   escrito AB-CD, e fica no plano de voo (campo 18, SEL/).
+ - Escolha o canal no combo: 190 canais de fonia aeronautica em HF, da
+   lista de frequencias do autor - as redes MWARA da ICAO (SAT, SAM, CAR,
+   NAT, AFI, MID, INO, SEA, CEP, CWP, NP, SP, NCA) e as LDOC das companhias.
+   Passe o mouse para ver as estacoes e os horarios (verde = no ar agora);
+   a busca acha pela frequencia ou pelo nome ("recife", "shanwick").
+   O radio vai em USB com o dial NA frequencia do canal (8906 kHz = 8.906,0
+   no radio). O 8906 (NAT-A: Santa Maria, Shanwick, New York) foi ouvido
+   pelo autor daqui do Brasil.
+ - O som continua ligado (voce ouve a conversa depois da chamada). Cada
+   codigo sai na caixa de baixo e na tabela (hora UTC, vezes, desvio de
+   sintonia, nivel e os tons); o mesmo codigo repetido soma em "Vezes".
+   Clique com o direito no codigo para copiar.
+ - Le os 16 tons classicos (A a S) e os 16 novos do SELCAL32 (T a Z e 1 a
+   9). O desvio do SSB (ate 60 Hz para cada lado) e achado sozinho. As
+   chamadas sao espacadas: pode levar varios minutos ate aparecer uma.
+
+ADSB (DECODE > ADSB)
+ - Os avioes em 1090 MHz (ADS-B / Modo S), decodificados aqui mesmo, sem
+   programa de fora. Ao escolher, o dongle passa para 2,4 Msps com 1090 MHz
+   no centro (nao mexa na sintonia); fechando a janela tudo volta como era.
+ - A tabela mostra voo, prefixo (matricula), codigo ICAO, modelo, pais,
+   altitude, velocidade, rumo, razao de subida, squawk e posicao. Voo e
+   prefixo abrem no FlightAware (igual ao ACARS), o codigo ICAO abre o
+   aviao no mapa do ADS-B Exchange e a posicao abre no Google Maps.
+ - O ADS-B so traz o codigo ICAO: o prefixo (PR-..., PP-...) e o modelo vem
+   do hexdb.io pela internet - vem DESLIGADO: ligue na caixinha "Buscar
+   prefixo e modelo na internet (hexdb.io)". Cada aviao e
+   consultado uma vez e fica guardado em adsb_prefixos.txt, ao lado do
+   programa. Os dos EUA (N...) sao calculados sem internet.
+ - A coluna Empresa mostra a companhia aerea (pelo codigo do voo: GLO = GOL,
+   TAM = LATAM, AZU = Azul...) ou, se nao for linha aerea: Militar, Governo,
+   Taxi aereo, Executiva ou Particular (helicoptero, planador... entram
+   entre parenteses). Passe o mouse para ver a categoria do aviao.
+ - Squawk 7500/7600/7700 aparece em vermelho e com aviso na caixa de texto.
+ - A tabela e o texto sao um registro: nada some sozinho (quem nao e ouvido
+   ha mais de 1 minuto fica apagadinho). O botao Limpar apaga o texto e as
+   tabelas. No ADSB, ACARS e VDL2 o som do radio fica mudo (nao serve para
+   nada: o decodificador usa o IQ).
+ - Precisa de antena para 1090 MHz (uma vertical de 6,9 cm ja funciona) e
+   ganho alto. Pelo rtl_tcp a rede tem de aguentar ~5 MB/s (2,4 Msps).
+
+RADAR AEREO (Decodificador > RADAR AEREO, ou o botao RADAR AEREO na janela do
+ADSB, ACARS, VDL2 e HFDL)
+ - Uma tela de radar, em tela cheia, com os avioes que o dongle esta ouvindo.
+   Nao e um decodificador novo: usa o que estiver rodando (se nenhum de
+   aviacao estiver ligado, liga o ADSB). O melhor e o ADSB, que manda a
+   posicao varias vezes por segundo; o ACARS, o VDL2 e o HFDL mandam so de
+   vez em quando (o aviao fica no radar 15 min na ultima posicao recebida).
+   No ACARS e no VDL2 so aparece o aviao cuja mensagem traz a posicao
+   (relatorio de posicao); a etiqueta mostra ha quanto tempo ela veio. A
+   tabela do ACARS/VDL2 tem a coluna Posicao.
+   O voo dessas mensagens vem com o codigo IATA da companhia (G31017 =
+   GOL): no radar ele aparece como GLO1017, com o nome da companhia. O
+   codigo ICAO, o modelo e o operador vem do hexdb.io pelo prefixo (cada
+   prefixo e consultado uma vez e guardado em acars_prefixos.txt).
+ - Aviao que o radio ouviu SEM posicao (ACARS/VDL2/HFDL sem relatorio de
+   posicao, Modo S sem ADS-B): o radar pega a posicao na rede aberta
+   adsb.lol pela internet. Esses aparecem SO EM CONTORNO, azul-claro, com
+   [NET] na etiqueta - a posicao nao foi o seu receptor. Vem DESLIGADO:
+   ligue na caixinha "Posicao pela internet (adsb.lol)" do radar.
+ - OPCIONAL: chave do ADS-B Exchange (campo embaixo da caixinha). O ADS-B
+   Exchange e PAGO: cada um assina um plano da API no RapidAPI
+   (rapidapi.com/adsbx/api/adsbexchange-com1) e cola a propria chave. Com a
+   chave, o radar procura primeiro la e, se nao achar, no adsb.lol (gratis).
+   Vale para ADS-B, ACARS, VDL2 e HFDL. A chave fica so no MB1SDR.ini.
+ - Prefixo, modelo e operador pelo codigo ICAO: caixinha "Buscar prefixo e
+   modelo na internet (hexdb.io)" no painel da esquerda do radar (tambem na
+   janela do ADSB). Vem desligada; ligando, fica gravado.
+ - Ficha do alvo: clique num valor para selecionar e copiar (Ctrl+C); o
+   botao "Copiar ficha" copia tudo.
+ - HFDL, ADSB, ACARS e VDL2 ligam o MUTE ao abrir; ao sair, volta como estava.
+ - HFDL: cada aviao tem uma linha tracejada rosa ate a estacao de terra com
+   quem ele esta falando ("Dst GS"), mesmo que voce nao ouca a estacao.
+   Desliga na caixinha "Linha ate a estacao de terra (HFDL)".
+ - HFDL: as estacoes de terra que voce ouve transmitindo (squitter, uplink:
+   "Src GS: Santa Cruz, Bolivia") aparecem como torre de antena ROSA, na
+   posicao da tabela do dumphfdl, com ondas saindo a cada transmissao
+   recebida. Ficam acesas enquanto sao ouvidas (somem 30 min depois).
+ - Na primeira vez pergunta o centro (a sua estacao): locator (GG87 ou
+   GG87jb) ou coordenadas (-22.8349,-42.3599). Fica no MB1SDR.ini; o botao
+   CENTRO troca. Cada um coloca a sua.
+ - A agulha gira 360 graus. Quando passa por um aviao que esta sendo ouvido,
+   ele acende na posicao daquele instante e vai apagando; se continua sendo
+   ouvido, acende de novo na volta seguinte. Se parou de ser ouvido (ADSB:
+   30 s, ajustavel), nao volta mais.
+ - Etiqueta de cada aviao: voo/prefixo, nivel de voo (FL) ou pes com a seta
+   de subida/descida, velocidade em nos, modelo e empresa. Rastro das voltas
+   anteriores e vetor de 1 minuto. Squawk 7500/7600/7700 pisca em vermelho.
+   Quem esta alem do alcance aparece como seta na borda, com a distancia
+   (util no HFDL, que ouve avioes a milhares de km).
+ - Mapa com a costa, as fronteiras e as divisas dos estados (Natural Earth
+   1:50m), os aeroportos grandes e medios do mundo (OurAirports), aneis de
+   distancia em volta da estacao e a escala de 0 a 359 graus.
+ - Abre sempre com 450 km de alcance. A roda do mouse (ou a barra e os
+   botoes) vai de 10 km ate 20.000 km - o planeta inteiro, para o HFDL ver
+   avioes na Europa, nos EUA ou na Africa. Arrastar move a vista, duplo
+   clique centraliza, RESET (ou Home) volta para a estacao e para 450 km.
+   Botao direito: menu (centralizar, seguir o aviao, copiar as coordenadas,
+   usar o ponto como centro do radar).
+ - Painel da esquerda: estacao, recepcao (mensagens/s com grafico, nivel,
+   aviao mais distante) e os ajustes (volta da agulha, quanto tempo o eco
+   fica aceso, mapa, aeroportos, etiquetas, cor por empresa ou por
+   altitude...). Painel da direita: lista dos alvos por distancia, ficha do
+   aviao escolhido (FlightAware, ADS-B Exchange, Google Maps, seguir),
+   eventos (aviao novo, perdido, emergencia) e as mensagens do decodificador.
+ - VOLTAR (ESC) volta para o programa e o decodificador continua ouvindo;
+   FECHAR para o decodificador e devolve o radio como estava. F11 ou o botao
+   TELA CHEIA / JANELA alterna entre a tela cheia e a janela.
+
+SATELITES (DECODE > SATELITES)
+ - A janela lista os satelites, a proxima passagem de cada um (hora local), o
+   grafico em cruz (N/L/S/O) com o caminho no ceu, onde o satelite ENTRA
+   (verde) e SAI (vermelho), e o mapa-mundi com a trilha no chao, a area de
+   cobertura e a noite. O QTH (locator GG87jb ou lat/lon) decide o que voce
+   ve. Os elementos orbitais (TLE) vem da Celestrak e sao baixados sozinhos
+   uma vez por dia (satelites.tle, ao lado do exe).
+ - Categoria RADIOAMADOR: os satelites de ham (fonia FM e SSB, SSTV, dados
+   AX.25). Duplo clique na linha (ou o botao Sintonizar) poe o radio na
+   frequencia de descida, no modo certo e com o filtro certo, e liga o
+   decodificador que o satelite pede (SSTV, direwolf ou so o audio).
+   "Corrigir Doppler" (opcional) vai seguindo o desvio durante a passagem.
+ - Categoria METEOROLOGICOS: os satelites de observacao da Terra. Pesquisado em
+   20/10/2026: o APT analogico da NOAA acabou (a POES foi desativada entre
+   junho e agosto de 2025 - NOAA-15, 18 e 19, cada um numa frequencia
+   diferente: 137,620 / 137,9125 / 137,100 MHz). Os que ainda mandam sinal em
+   VHF sao os METEOR-M russos: N2-3 (57166) e N2-4 (59051), LRPT digital
+   (OQPSK 72 ksym/s) em 137,900 MHz, ~150 kHz de banda, que se decodifica no
+   SatDump com o IQ bruto (este programa so afina e acompanha a passagem).
+   Os desligados ficam na lista com um X e "DESATIVADO".
+ - Categoria MILITARES: os satelites de defesa que retransmitem VOZ (ou imagem)
+   SEM CRIPTOGRAFIA, com os dados do site Satellitenwelt (conferidos com a
+   Celestrak em 20/10/2026). Entram so os que tem POCAS frequencias (uma ou
+   duas) e que ainda estao em orbita: MILSTAR 1-F1 (243,825 MHz) e MILSTAR
+   2-F3 (243,785 MHz), Skynet 4C (254,050 e 257,550 MHz) e Skynet 4E (254,155
+   e 257,500 MHz), e o MERIDIAN 7 (483,750 e 484,250 MHz) - orbita alta de 63
+   graus, o que da as melhores passagens pelo Sul do Brasil.
+   Ficaram de fora os de lista grande de frequencias (UFO F2/F7/F10/F11, SICRAL,
+   Skynet 5, ComSatBw, MUOS, SDS 3-F2 a F6, FltSatCom) e os que ja cairam.
+   O modo e NFM com 12,5 kHz de filtro: e assim que se ouve esses transponders.
+   Os geostacionarios mostram GEO no lugar de "Proxima" e "Situacao" (eles
+   ficam sempre no mesmo ponto do ceu).
+ - Na lista, quem esta para passar em menos de 15 min fica VERDE (e aparece no
+   topo, porque a lista e ordenada pelo horario da passagem); quem esta no ar
+   tambem. De amarelo, quem passa em menos de 1 h.
+ - Fechando a janela (ou o decodificador) o RADIO VOLTA AO ESTADO ANTERIOR:
+   frequencia, modo e largura do filtro como estavam antes de sintonizar.
+ - Antena de 137 MHz: QFH ou dipolo em V com circulacao a direita (os
+   meteorologicos pedem RHCP).
+
+Licenca: software livre, GNU GPL versao 3 (LICENSE.txt).
+Os decodificadores da pasta decoders sao de outros autores e seguem a licenca
+de cada um (lista e enderecos do codigo-fonte em TERCEIROS.txt).
