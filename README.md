@@ -1,6 +1,6 @@
 # MB1SDR
 
-Receptor SDR para Windows com a cara de um transceptor SDR de HF/VHF de mesa no estilo do **MB1** (sem a marca do fabricante; **MB1SDR** dourado no lugar da placa): a tela grande com o **S-meter de ponteiro**, as duas frequências, os indicadores, o **espectro verde** e a **cachoeira azul**; o teclado de bandas, o **dial grande**, os quatro botões duplos, as teclas F1 a F21 e o MULTI 3. Rádio cinza-escuro, letras brancas e as molduras dos botões como no original.
+Receptor SDR para Windows com a cara de um transceptor SDR de HF/VHF de mesa no estilo do **MB1** (sem a marca do fabricante; na placa, "SDR Transceiver" em branco e **MB1SDR** dourado): a tela grande com o **S-meter de ponteiro**, as duas frequências, os indicadores, o **espectro verde** e a **cachoeira azul**; o teclado de bandas, o **dial grande**, os quatro botões duplos, as teclas F1 a F21 e o MULTI 3. Rádio cinza-escuro, letras brancas e as molduras dos botões como no original.
 
 A tela do rádio já tem o espectro e a cachoeira, então não há cachoeira separada: a **largura do escopo vai de 0,25 a 3,2 MSPS** (tecla de toque SPAN / F6), com zoom (Z+ / Z-). A tecla **EXPAND (F1)** faz o espectro e a cachoeira crescerem juntos e ocuparem a tela toda do rádio.
 
