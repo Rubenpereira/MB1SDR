@@ -1403,34 +1403,34 @@ void Ui::mb1Teclado()
         }
     }
     // ---- as teclas de canto e o dial ----
-    const float cxD = 1077.f, cyD = 467.f, rCorte = 158.f;
+    const float cxD = 1077.f, cyD = 467.f, rCorte = 143.f;   // as teclas de canto bem perto do dial
     {
-        const int k = teclaCanto("kcRx2", 912, 303, 998, 384, cxD, cyD, rCorte,
+        const int k = teclaCanto("kcRx2", 924, 312, 1006, 392, cxD, cyD, rCorte,
                                  "RX2: liga / desliga o escopo do VFO-B ao lado (Sub RX)");
-        tx(fP(), 10.f, 932, 342, dual_ ? M_ROT : IM_COL32(0x80, 0x84, 0x8a, 255), "RX2", 0.f, 0.95f);
-        ledMb(921, 318, 6.f, IM_COL32(0x50, 0xf0, 0x60, 255), dual_);
+        tx(fP(), 10.f, 943, 352, dual_ ? M_ROT : IM_COL32(0x80, 0x84, 0x8a, 255), "RX2", 0.f, 0.95f);
+        ledMb(933, 327, 6.f, IM_COL32(0x50, 0xf0, 0x60, 255), dual_);
         if (k == 1) dual_ = !dual_;
     }
     {
-        const int k = teclaCanto("kcAb", 1156, 303, 1242, 384, cxD, cyD, rCorte,
+        const int k = teclaCanto("kcAb", 1148, 312, 1230, 392, cxD, cyD, rCorte,
                                  "A/B: o dial, o som e os botões passam para o outro VFO (A ou B)\nSegurar: troca as frequências A e B");
-        tx(fP(), 10.f, 1213, 346, ativo_ == 0 ? M_ROT : IM_COL32(0x80, 0x84, 0x8a, 255), "A", 1.f, 0.95f);
-        tx(fP(), 10.f, 1217, 346, IM_COL32(0x80, 0x84, 0x8a, 255), "/", 0.5f, 0.95f);
-        tx(fP(), 10.f, 1221, 346, ativo_ == 1 ? M_LARANJA : IM_COL32(0x90, 0x6c, 0x58, 255), "B", 0.f, 0.95f);
-        ledMb(1233, 318, 6.f, IM_COL32(0xff, 0x9a, 0x30, 255), ativo_ == 1);
+        tx(fP(), 10.f, 1201, 352, ativo_ == 0 ? M_ROT : IM_COL32(0x80, 0x84, 0x8a, 255), "A", 1.f, 0.95f);
+        tx(fP(), 10.f, 1205, 352, IM_COL32(0x80, 0x84, 0x8a, 255), "/", 0.5f, 0.95f);
+        tx(fP(), 10.f, 1209, 352, ativo_ == 1 ? M_LARANJA : IM_COL32(0x90, 0x6c, 0x58, 255), "B", 0.f, 0.95f);
+        ledMb(1221, 327, 6.f, IM_COL32(0xff, 0x9a, 0x30, 255), ativo_ == 1);
         if (k == 1) ativar(1 - ativo_);
         if (k == 2) { trocarMainSub(); aviso("A <> B"); }
     }
     {
-        const int k = teclaCanto("kcLock", 912, 510, 998, 588, cxD, cyD, rCorte,
+        const int k = teclaCanto("kcLock", 924, 506, 1006, 586, cxD, cyD, rCorte,
                                  R.lock ? "LOCK: destravar o dial" : "LOCK: travar o dial");
-        tx(fP(), 8.f, 932, 576, R.lock ? IM_COL32(0xff, 0x6c, 0x40, 255) : IM_COL32(0xc0, 0x60, 0x40, 255), "LOCK", 0.5f, 0.95f);
+        tx(fP(), 8.f, 945, 572, R.lock ? IM_COL32(0xff, 0x6c, 0x40, 255) : IM_COL32(0xc0, 0x60, 0x40, 255), "LOCK", 0.5f, 0.95f);
         if (k == 1) { R.lock = !R.lock; aviso(R.lock ? "LOCK: dial travado" : "LOCK: dial livre"); }
     }
     {
-        const int k = teclaCanto("kcDi", 1156, 510, 1242, 588, cxD, cyD, rCorte,
+        const int k = teclaCanto("kcDi", 1152, 506, 1234, 586, cxD, cyD, rCorte + 6.f,
                                  "D/I: passo do dial (clique escolhe)\nSegurar: FAST (dial 10x mais rápido)");
-        tx(fP(), 8.f, 1222, 576, M_ROT, "D/I", 0.5f, 0.95f);
+        tx(fP(), 8.f, 1214, 573, M_ROT, "D/I", 0.5f, 0.95f);
         if (k == 1) ImGui::OpenPopup("##passoMb");
         if (k == 2) { fast_ = !fast_; aviso(fast_ ? "FAST ligado" : "FAST desligado"); }
     }
