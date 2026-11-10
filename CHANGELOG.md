@@ -1,5 +1,15 @@
 # MB1SDR - histórico
 
+## 1.1.2 (10/11/2026)
+- Squelch mais sensível em FM, AM e nos outros modos: agora ele mede quanto o sinal passa do ruído de um
+  canal vazio da largura do filtro. Antes o nível tinha um teto em 0 dB e, com o pré-amplificador ou o AGC do
+  dongle, o próprio ruído já batia nesse teto: o squelch que fechava o ruído não abria com sinal nenhum (ex.:
+  DMR em 165 MHz no VFO-B). Na escala nova o ruído fica em -60: SQL -55 = 5 dB acima do ruído, -40 = 20 dB.
+  Vale também para o squelch do outro VFO com dois aparelhos.
+- Quem usava o squelch ligado fica com -50 (10 dB acima do ruído) na primeira vez que abre esta versão.
+- BUSY do outro VFO (com dois aparelhos) agora acende só com o squelch dele aberto (antes acendia com o
+  S-meter acima do ruído, mesmo com o squelch fechado).
+
 ## 1.1.1 (09/11/2026)
 - "Pouco ganho" no espectro e na cachoeira: o ganho de RF estava certo (medido: RF 100% = tuner 44,5 dB + ganho
   digital; em HF o ruído fica em -10 dBFS, em VHF -45 dBFS; RF 50% derruba 25-30 dB, o PRMP soma 6 dB por degrau),

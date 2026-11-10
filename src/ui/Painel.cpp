@@ -1599,6 +1599,7 @@ void Ui::ativar(int i)
         r_->setMedirCanal(true);
         std::swap(fft_, fftO_);
         std::swap(suave_, suaveO_);
+        std::swap(pisoSqlA_, pisoSqlO_);
         std::swap(pisoMed_, pisoO_);
         quadrosOutro_ = 0;
         picoHold_.assign(suave_.size(), -200.f);
@@ -1886,6 +1887,12 @@ void Ui::carregarPainel()
     }
     rx_[0].f = r_->vfo(); rx_[0].modo = r_->modo();      // o MAIN e o que o radio tinha
     ativo_ = 0;
+    if (c.num("sql_rel", 0) < 1) {
+        // o squelch mudou de escala (10/11/2026: dB acima do ruido - 60): o valor antigo nao vale mais;
+        // quem tinha squelch ligado fica com 10 dB acima do ruido
+        for (auto& R : rx_) if (R.sql > -90.f) R.sql = -50.f;
+        c.set("sql_rel", 1);
+    }
     txVfo_ = (int)std::clamp(c.num("p_tx", 0), 0LL, 1LL);
     att_ = (int)std::clamp(c.num("p_att", 0), 0LL, 3LL);
     pamp_ = (int)std::clamp(c.num("p_pamp", 0), 0LL, 2LL);
@@ -2760,7 +2767,7 @@ void Ui::ladoVfo(float x, float y, float w, float h, int rx)
             texto(f_.painel, 5.2f, xi, y + 2.5f, c, t);
             xi += larguraTexto(f_.painel, 5.2f, t) + 4.f;
         };
-        const bool busy = lig && r_->aoVivo() && (at ? (sqlAberto_ && (sql_ > -90 || smAtual_ > 0.22f)) : smOutro_ > 0.30f);
+        const bool busy = lig && r_->aoVivo() && ocupadoRx(rx);
         if (busy) ind("BUSY", P_VERDE);
         if (txVfo_ == rx && txVfo_ != ativo_) ind("TX", P_VERMELHO);
         if (R.lock) ind("LOCK", P_VERMELHO);
@@ -4521,7 +4528,7 @@ void Ui::icEsquerda()
         tx(fP(), 11.5f, 447, yRot + 23, BR, "TX/RX", 0.5f, 0.94f);
         {   // LED TX/RX: verde com sinal (squelch aberto), vermelho se este e o receptor de "TX" no SPLIT
             const bool at = rx == ativo_;
-            const bool busy = lig && r_->aoVivo() && (at ? (sqlAberto_ && (R.sql > -90 || smAtual_ > 0.22f)) : smOutro_ > 0.30f);
+            const bool busy = lig && r_->aoVivo() && ocupadoRx(rx);
             const ImU32 cl = (txVfo_ == rx && txVfo_ != ativo_) ? IM_COL32(0xff, 0x40, 0x30, 255) : busy ? IM_COL32(0xd8, 0xff, 0x3c, 255) : IM_COL32(0x30, 0x32, 0x2c, 255);
             if (cl != IM_COL32(0x30, 0x32, 0x2c, 255)) dl->AddRectFilled(Q(447, yRot + 34), Q(477, yRot + 46), alfa(cl, 70), QD(5));
             dl->AddRectFilled(Q(451, yRot + 37), Q(473, yRot + 43), cl, QD(3));
@@ -4975,7 +4982,7 @@ void Ui::icVfo(int rx, float yS)
             xi += w + 4.f;
         };
         const ImU32 cz = IM_COL32(0xc8, 0xcc, 0xd2, 255), lr = IM_COL32(0xff, 0xa0, 0x30, 255);
-        const bool busy = lig && r_->aoVivo() && (at ? (sqlAberto_ && (R.sql > -90 || smAtual_ > 0.22f)) : smOutro_ > 0.30f);
+        const bool busy = lig && r_->aoVivo() && ocupadoRx(rx);
         if (busy) ind("BUSY", IM_COL32(0x60, 0xff, 0x70, 255));
         if (R.nb1 || R.nb2) ind(R.nb2 ? "NB2" : "NB", cz);
         if (R.nr2) ind("NR", cz);
@@ -6449,7 +6456,7 @@ void Ui::ft9Visor()
     const Receptor& R1 = rx_[1];
     auto ocupado = [&](int rx) {
         const Receptor& R = rx_[rx];
-        return lig && r_->aoVivo() && (rx == ativo_ ? (sqlAberto_ && (R.sql > -90 || smAtual_ > 0.22f)) : smOutro_ > 0.30f);
+        return lig && r_->aoVivo() && ocupadoRx(rx);
     };
     (void)R0; (void)R1;
     struct L9 { float x; const char* t; int cor; bool on; const char* dica; };

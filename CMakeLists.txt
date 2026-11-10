@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(MB1SDR VERSION 1.1.1 LANGUAGES C CXX)
+project(MB1SDR VERSION 1.1.2 LANGUAGES C CXX)
 
 # ---------------------------------------------------------------------------
 #  MB1SDR - receptor SDR com painel de radio (Windows 7 SP1 ate 11)
