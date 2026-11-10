@@ -1,5 +1,23 @@
 # MB1SDR - histórico
 
+## 1.1.1 (09/11/2026)
+- "Pouco ganho" no espectro e na cachoeira: o ganho de RF estava certo (medido: RF 100% = tuner 44,5 dB + ganho
+  digital; em HF o ruído fica em -10 dBFS, em VHF -45 dBFS; RF 50% derruba 25-30 dB, o PRMP soma 6 dB por degrau),
+  o desenho é que escondia o sinal: o topo da escala ficava 45 dB acima do ruído (o ruído colado embaixo) e a cachoeira
+  azul só clareava 23 dB acima do ruído. Agora o topo fica 40 dB acima do ruído (o ruído a 1/4 da altura) e a cachoeira
+  fica branca ~14 dB acima do ruído, amarela ~22 dB e vermelha ~33 dB, como a Eclipse. Quem já usava ganha o ajuste
+  sozinho na primeira vez que abre.
+- PRMP da tela mostra o ganho real do pré: 6 / 12 dB (SDRplay 10 / 20 dB).
+
+## 1.1.0 (09/11/2026)
+- Dois aparelhos: o VFO-B pode ter o seu próprio dongle (RTL-SDR, RTL-TCP ou SDRplay), recebendo ao mesmo tempo que o VFO-A.
+  Áudio dos dois juntos (padrão), volume de cada um (AF; SHIFT + AF = AF2 do outro VFO) ou só o selecionado (MON da tela).
+  Escopo do VFO-B com a janela inteira do aparelho dele; S-meter, BUSY e squelch de cada VFO no aparelho dele.
+- Com dois aparelhos, botões de dois receptores: AF A / RF A, AF B / RF B e SQL A / SQL B (MULTI 1).
+- A tecla Shift do teclado do PC faz o SHIFT do painel enquanto está apertada.
+- Um slider de volume em pé ao lado de cada frequência da tela (VFO-A e VFO-B).
+- EXPAND (F1): espectro e cachoeira na tela toda. Régua do escopo arrastável. MODE (F5) e a caixa do modo na tela.
+
 ## 1.0.0 (08/11/2026)
 - Primeira versão. Mesmo motor do FTdx9000D-SDR / IC7610SDR (RTL-SDR, RTL-TCP, SDRplay, todos os decodificadores,
   Radar Aéreo, Satélites; S-meter que acompanha o áudio), com o painel novo no estilo do MB1, medido na foto do

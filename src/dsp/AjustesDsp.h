@@ -20,7 +20,10 @@ struct AjustesDsp {
 
     static AjustesDsp& g() { static AjustesDsp a; return a; }
 
+    // MB1SDR (dois aparelhos): cada aparelho tem a sua thread; so a do receptor ouvido marca o canal
+    static bool& mede() { thread_local bool m = true; return m; }
     static void canal(float v) {
+        if (!mede()) return;
         std::atomic<float>& p = g().picoCanal;
         float o = p.load(std::memory_order_relaxed);
         while (v > o && !p.compare_exchange_weak(o, v, std::memory_order_relaxed)) {}

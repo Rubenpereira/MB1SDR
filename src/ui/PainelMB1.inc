@@ -328,6 +328,13 @@ double passoGradeMb(double span)
 void Ui::mb1Chassi()
 {
     ImDrawList* dl = ImGui::GetWindowDrawList();
+    {   // MB1SDR: a tecla Shift do teclado do PC tambem faz o SHIFT do painel enquanto esta apertada
+        static bool porTecla = false, antes = false;
+        const ImGuiIO& io = ImGui::GetIO();
+        const bool k = io.KeyShift && !io.WantTextInput;
+        if (k && !porTecla) { antes = shift_; shift_ = true; porTecla = true; }
+        else if (!k && porTecla) { shift_ = antes; porTecla = false; }
+    }
     const ImDrawListFlags fl0 = dl->Flags;
     if (g_fundoChave) dl->Flags &= ~ImDrawListFlags_AntiAliasedFill;   // sem franja rosa na cor-chave
     // ---- a tampa de cima (vista um pouco de cima: mais estreita no fundo) ----
@@ -451,7 +458,7 @@ void Ui::mb1Chassi()
 void Ui::mb1Esquerda()
 {
     ImDrawList* dl = ImGui::GetWindowDrawList();
-    const bool lig = r_.ligado();
+    const bool lig = r_->ligado();
     Receptor& R = rx_[ativo_];
     // POWER (o simbolo vermelho)
     {
@@ -467,7 +474,7 @@ void Ui::mb1Esquerda()
     }
     // os dois LEDs: ligado (verde) e sinal no canal / squelch aberto (BUSY)
     {
-        const bool busy = lig && r_.aoVivo() && sqlAberto_ && (R.sql > -90 || smAtual_ > 0.22f);
+        const bool busy = lig && r_->aoVivo() && sqlAberto_ && (R.sql > -90 || smAtual_ > 0.22f);
         ledMb(49, 85, 5.2f, IM_COL32(0x40, 0xe0, 0x60, 255), lig);
         ledMb(99, 85, 5.2f, IM_COL32(0xff, 0x9a, 0x30, 255), busy);
         ImGui::SetCursorScreenPos(Q(40, 76));
@@ -491,9 +498,15 @@ void Ui::mb1Esquerda()
     if (teclaTxt("mMut", "MUT", xa0, 137, xa1, 163, 9.5f, M_ROT, "MUT: silencia o receptor ouvido", nullptr, R.mute) == 1) R.mute = !R.mute;
     {
         bool seg = false;
-        teclaTxt("mMon", "MON", xb0, 137, xb1, 163, 9.5f, M_ROT, "MON (monitor): enquanto segura, ouve o outro receptor (VFO-B / VFO-A)", &seg, xfcVolta_ >= 0);
-        if (seg && xfcVolta_ < 0) { xfcVolta_ = ativo_; ativar(1 - ativo_); }
-        if (!seg && xfcVolta_ >= 0) { ativar(xfcVolta_); xfcVolta_ = -1; }
+        teclaTxt("mMon", "MON", xb0, 137, xb1, 163, 9.5f, M_ROT,
+                 duas_ ? "MON (monitor): enquanto segura, só o outro VFO toca (o ouvido fica mudo)"
+                       : "MON (monitor): enquanto segura, ouve o outro receptor (VFO-B / VFO-A)", &seg, xfcVolta_ >= 0 || monSolo_);
+        if (duas_) monSolo_ = seg;       // dois aparelhos: os dois ja tocam; MON deixa so o outro
+        else {
+            monSolo_ = false;
+            if (seg && xfcVolta_ < 0) { xfcVolta_ = ativo_; ativar(1 - ativo_); }
+            if (!seg && xfcVolta_ >= 0) { ativar(xfcVolta_); xfcVolta_ = -1; }
+        }
     }
     // AGC (FAST / MID / SLOW / OFF) e ATT (0 / -6 / -12 / -18 dB)
     {
@@ -584,7 +597,7 @@ void Ui::mb1Esquerda()
         ImGui::SetCursorScreenPos(Q(56, 362));
         if (ImGui::InvisibleButton("##phMb", ImVec2(QD(44), QD(44)))) { saidas_ = SomNativo::listarSaidas(); ImGui::OpenPopup("##saidaIc"); }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("PHONES: escolher a saída de som (placa / fone)");
-        const bool grav = r_.som().gravando();
+        const bool grav = r_->som().gravando();
         ImGui::SetCursorScreenPos(Q(56, 445));
         if (ImGui::InvisibleButton("##m1Mb", ImVec2(QD(44), QD(44)))) alternarGravacao();
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", grav ? "MIC 1: parar a gravação do áudio" : "MIC 1: gravar o áudio (pasta Gravacoes) - o LED REC acende");
@@ -602,7 +615,7 @@ void Ui::mb1Esquerda()
 void Ui::mb1Tela()
 {
     ImDrawList* dl = ImGui::GetWindowDrawList();
-    const bool lig = r_.ligado();
+    const bool lig = r_->ligado();
     Receptor& R = rx_[ativo_];
     Receptor& O = rx_[1 - ativo_];
     const float X0 = 176, Y0 = 79, X1 = 858, Y1 = 504;
@@ -648,12 +661,12 @@ void Ui::mb1Tela()
     if (!expand_) {   // MB1SDR: com EXPAND (F1) o escopo ocupa esta parte
     // ---- ATU: (num receptor) o aparelho ----
     {
-        const char* dev = !r_.temDispositivo() ? "--" : r_.tipo() == "rtltcp" ? "RTL-TCP" : r_.tipo() == "sdrplay" ? "SDRplay" : "RTL-SDR";
+        const char* dev = !r_->temDispositivo() ? "--" : r_->tipo() == "rtltcp" ? "RTL-TCP" : r_->tipo() == "sdrplay" ? "SDRplay" : "RTL-SDR";
         std::snprintf(b, sizeof b, "SDR: %s", dev);
         txT(fL(), 7.2f, 180, 107, CI, b);
         ImGui::SetCursorScreenPos(Q(178, 100));
         if (ImGui::InvisibleButton("##devMb", ImVec2(QD(70), QD(14)))) abrirConfig();
-        if (ImGui::IsItemHovered()) ImGui::SetTooltip("O aparelho em uso (clique: CONFIGURAÇÃO)\nTaxa: %.3f Msps", r_.taxa() / 1e6);
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("O aparelho em uso (clique: CONFIGURAÇÃO)\nTaxa: %.3f Msps", r_->taxa() / 1e6);
     }
     mb1Medidor();
     // ---- PA / LOCK / IQ / PLAY (acendem quando ligados) ----
@@ -664,14 +677,14 @@ void Ui::mb1Tela()
         txT(fL(), 6.f, 408, 182, dc ? W : M_APAG, "IQ", 0.5f);
         dl->AddCircleFilled(Q(421, 182), QD(3.2f), dc ? M_VERDE : M_APAG, 12);
         dl->AddTriangleFilled(Q(405, 193), Q(405, 201), Q(412, 197), M_APAG);
-        dl->AddCircleFilled(Q(421, 197), QD(3.2f), r_.som().gravando() ? IM_COL32(0xff, 0x40, 0x30, 255) : M_APAG, 12);
+        dl->AddCircleFilled(Q(421, 197), QD(3.2f), r_->som().gravando() ? IM_COL32(0xff, 0x40, 0x30, 255) : M_APAG, 12);
         ImGui::SetCursorScreenPos(Q(400, 176));
         if (ImGui::InvisibleButton("##iqMb", ImVec2(QD(28), QD(12)))) { auto& c = Config::instance(); c.set("dc_remove", !c.dcRemove()); }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("IQ: tirar o risco do DC do centro do escopo (clique liga / desliga)");
     }
     // ---- a parte de cima, a direita: RX / TX, PRMP, data e hora ----
     {
-        const uint64_t f = r_.vfo();
+        const uint64_t f = r_->vfo();
         const char* faixa = f >= 300000000ULL ? "UHF" : f >= 30000000ULL ? "VHF" : "HF";
         std::snprintf(b, sizeof b, "%s RX", faixa);
         txT(fL(), 7.f, 447, 110, CI, b);
@@ -682,7 +695,7 @@ void Ui::mb1Tela()
         antenaMb(595, 110, 8.f, CI);
         txT(fL(), 7.f, 607, 110, CI, txVfo_ == 0 ? "A1" : "B1");
         if (att_ > 0) std::snprintf(b, sizeof b, "ATT: -%d dB", 6 * att_);
-        else std::snprintf(b, sizeof b, "PRMP: %d dB", pamp_ * 10);
+        else std::snprintf(b, sizeof b, "PRMP: %d dB", pamp_ * (r_->tipo() == "sdrplay" ? 10 : 6));
         txT(fL(), 7.6f, 647, 110, att_ > 0 ? M_LARANJA : CI, b);
         ImGui::SetCursorScreenPos(Q(645, 103));
         if (ImGui::InvisibleButton("##prmpMb", ImVec2(QD(70), QD(14)))) pamp_ = (pamp_ + 1) % 3;
@@ -720,7 +733,7 @@ void Ui::mb1Tela()
             if (R.agcOff) { R.agcOff = false; R.agc = 3; } else if (R.agc <= 1) R.agcOff = true; else R.agc -= 1;
         }
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("AGC: clique troca FAST > MID > SLOW > OFF");
-        const std::string md = r_.modo();
+        const std::string md = r_->modo();
         const std::string nmMd = md == "NFM" ? "FM" : md;
         {   // caixa do modo (clique: menu dos modos)
             const bool sobreMd = ImGui::IsMouseHoveringRect(Q(656, 122), Q(708, 141), false);
@@ -733,7 +746,21 @@ void Ui::mb1Tela()
         if (ImGui::InvisibleButton("##mdMb", ImVec2(QD(52), QD(19)))) ImGui::OpenPopup("##modosIc");
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("MODE: clique para escolher LSB, USB, CW, AM, FM, WFM e os digitais\n(também na tecla de toque MODE / F5)");
         txT(fL(), 8.f, 740, 131, M_APAG, "BREAK IN");
-        txT(fL(), 8.f, 830, 131, M_APAG, "MON", 1.f);
+        {   // MON: com dois aparelhos, acende quando os dois VFOs tocam juntos (clique troca)
+            const bool monOn = duas_ && ouvirOs2_;
+            txT(fL(), 8.f, 830, 131, monOn ? M_VERDE : M_APAG, "MON", 1.f);
+            ImGui::SetCursorScreenPos(Q(808, 124));
+            if (ImGui::InvisibleButton("##monTela", ImVec2(QD(24), QD(15))) && duas_) {
+                ouvirOs2_ = !ouvirOs2_;
+                Config::instance().set("b_dois_audios", ouvirOs2_);
+                aviso(ouvirOs2_ ? "Os dois VFOs tocam juntos" : "Só o VFO selecionado toca", 1.5);
+            }
+            if (ImGui::IsItemHovered())
+                ImGui::SetTooltip("%s", duas_ ? "MON: aceso = o áudio dos dois VFOs ao mesmo tempo (cada um com o seu volume)\n"
+                                                "apagado = só o VFO selecionado toca. Clique troca."
+                                              : "MON: com o VFO-B num aparelho próprio (CONFIGURAÇÃO > VFO-B),\n"
+                                                "acende quando os dois VFOs tocam juntos");
+        }
     }
     // ---- as frequencias: a do receptor ouvido (grande) e a do outro ----
     {
@@ -746,7 +773,7 @@ void Ui::mb1Tela()
             const std::string t = (entrada_.empty() ? std::string("_") : entrada_) + " kHz";
             txT(fL(), 20.f, 636, 165, P_AMBAR, t.c_str(), 1.f);
         } else {
-            freqMb(dl, r_.vfo() % 1000000000ULL, xs, 6, 18.5f, 28.f, 151.f, 4.0f, xp, 3, 12.f, 19.5f, 160.f, 3.0f, pontos,
+            freqMb(dl, r_->vfo() % 1000000000ULL, xs, 6, 18.5f, 28.f, 151.f, 4.0f, xp, 3, 12.f, 19.5f, 160.f, 3.0f, pontos,
                    lig ? M_BRANCO : IM_COL32(0x60, 0x64, 0x6a, 255), apag, &caixas);
         }
         static const float xs2[6] = {680, 697, 714, 740, 757, 774};
@@ -778,12 +805,50 @@ void Ui::mb1Tela()
         if (ImGui::InvisibleButton("##fqMb", ImVec2(QD(185), QD(36)))) { entrando_ = !entrando_; entrada_.clear(); }
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("VFO-%s (o que se ouve): %s\nClique: digitar a frequência (kHz, Enter confirma, Esc cancela)\nRoda do mouse em cima de um dígito: muda aquele dígito",
-                              ativo_ == 0 ? "A" : "B", fmtFreq(r_.vfo()).c_str());
+                              ativo_ == 0 ? "A" : "B", fmtFreq(r_->vfo()).c_str());
         ImGui::SetCursorScreenPos(Q(676, 153));
         if (ImGui::InvisibleButton("##fq2Mb", ImVec2(QD(160), QD(30)))) ativar(1 - ativo_);
         if (ImGui::IsItemHovered())
             ImGui::SetTooltip("VFO-%s (o outro receptor): %s\nClique: passar a ouvir este\nRoda do mouse em cima de um dígito: muda aquele dígito",
                               ativo_ == 0 ? "B" : "A", fmtFreq(O.f).c_str());
+    }
+    // ---- os volumes de cada VFO: um slider em pe ao lado de cada frequencia (A na esquerda, B na direita) ----
+    {
+        auto sliderVol = [&](int rx, float x0, float x1, const char* rot) {
+            Receptor& V = rx_[rx];
+            const float y0 = 141.f, y1 = 213.f;
+            const bool ouvido = rx == ativo_;
+            const bool toca = lig && !V.mute && !sendMudo_ && (ouvido ? !(duas_ && monSolo_) : (duas_ && (ouvirOs2_ || monSolo_)));
+            const ImU32 cv = !toca ? IM_COL32(0x60, 0x66, 0x70, 255) : rx == 0 ? IM_COL32(0x5c, 0xbe, 0xf6, 255) : IM_COL32(0xf0, 0xb0, 0x40, 255);
+            txT(fL(), 6.5f, (x0 + x1) * 0.5f, 133, cv, rot, 0.5f);
+            dl->AddRectFilled(Q(x0, y0), Q(x1, y1), IM_COL32(0x06, 0x08, 0x0c, 255), QD(2.5f));
+            dl->AddRect(Q(x0, y0), Q(x1, y1), IM_COL32(0x50, 0x58, 0x66, 255), QD(2.5f), 0, std::max(1.f, QD(1.f)));
+            const float t = std::clamp(V.af / 100.f, 0.f, 1.f);
+            const float yv = y1 - 1.5f - t * (y1 - y0 - 3.f);
+            dl->AddRectFilledMultiColor(Q(x0 + 1.5f, yv), Q(x1 - 1.5f, y1 - 1.5f), alfa(cv, 255), alfa(cv, 255), alfa(cv, 110), alfa(cv, 110));
+            for (int k = 1; k < 5; ++k) { const float y = y1 - (y1 - y0) * k / 5.f; dl->AddLine(Q(x0 + 1, y), Q(x0 + 3, y), IM_COL32(0x80, 0x88, 0x96, 200), 1.f); }
+            dl->AddRectFilled(Q(x0 - 1.5f, yv - 1.6f), Q(x1 + 1.5f, yv + 1.6f), toca ? M_BRANCO : IM_COL32(0x90, 0x94, 0x9a, 255), QD(1));
+            char id[16]; std::snprintf(id, sizeof id, "##vol%d", rx);
+            ImGui::SetCursorScreenPos(Q(x0 - 4, y0 - 3));
+            ImGui::InvisibleButton(id, ImVec2(QD(x1 - x0 + 8), QD(y1 - y0 + 6)));
+            ImGuiIO& io = ImGui::GetIO();
+            if (ImGui::IsItemActive()) {
+                const float myFoto = (io.MousePos.y - M.oy) / std::max(0.01f, M.k * kK) - 24.f;
+                V.af = std::clamp((y1 - 1.5f - myFoto) / (y1 - y0 - 3.f) * 100.f, 0.f, 100.f);
+            }
+            if (ImGui::IsItemHovered()) {
+                if (io.MouseWheel != 0) { V.af = std::clamp(V.af + io.MouseWheel * 3.f, 0.f, 100.f); io.MouseWheel = 0; }
+                const float db = V.af <= 0.5f ? -99.f : 40.f * std::log10(V.af / 100.f);
+                char vb[24];
+                if (db <= -99.f) std::snprintf(vb, sizeof vb, "OFF"); else std::snprintf(vb, sizeof vb, "%d dB", (int)std::lround(db));
+                ImGui::SetTooltip("Volume do VFO-%s: %d%% (%s)%s\nArraste para cima / para baixo ou use a roda do mouse.\n%s",
+                                  rx == 0 ? "A" : "B", (int)std::lround(V.af), vb, V.mute ? "  - MUTE" : "",
+                                  duas_ ? (ouvido ? "Este é o VFO ouvido (o AF também controla)." : (ouvirOs2_ ? "Os dois VFOs tocam juntos (MON da tela)." : "Este VFO está mudo: MON da tela liga os dois juntos."))
+                                        : (ouvido ? "Este é o VFO ouvido (o AF também controla)." : "Vale quando este VFO for o ouvido (A/B)."));
+            }
+        };
+        sliderVol(0, 433.f, 442.f, "A");
+        sliderVol(1, 843.f, 852.f, "B");
     }
     // ---- os indicadores (acendem quando a funcao esta ligada; clique liga / desliga) ----
     {
@@ -808,7 +873,7 @@ void Ui::mb1Tela()
         if (ind("##iVox", 586, 186, "VOX", sqlAuto_[ativo_] || sqlMedindo_, w, "VOX: (num receptor) squelch automático\nClique: mede o ruído e fecha o squelch logo acima")) {
             if (sqlMedindo_) { sqlMedindo_ = false; R.sql = -90.f; sql_ = -90.f; sqlAplicado_ = -90.f; sqlAuto_[ativo_] = false; }
             else if (sqlAuto_[ativo_]) { R.sql = -90.f; sql_ = -90.f; sqlAplicado_ = -90.f; sqlAuto_[ativo_] = false; aviso("Squelch aberto"); }
-            else if (r_.aoVivo()) { sqlMedindo_ = true; sqlAmostras_.clear(); sqlIni_ = agora(); sqlUlt_ = 0; }
+            else if (r_->aoVivo()) { sqlMedindo_ = true; sqlAmostras_.clear(); sqlIni_ = agora(); sqlUlt_ = 0; }
         }
         if (ind("##iMute", 625, 186, "MUTE", R.mute || sendMudo_, IM_COL32(0xff, 0x60, 0x50, 255), "MUTE: receptor silenciado")) R.mute = !R.mute;
         if (ind("##iReq", 660, 186, "R.EQ", rxeq_ != 0, w, "R.EQ: equalização do áudio (clique troca)")) {
@@ -829,7 +894,7 @@ void Ui::mb1Tela()
         if (ind("##iNb2", 658, 203, "NB2", R.nb2, w, "NB2: apagador de pulsos no IQ (antes do demodulador)")) R.nb2 = !R.nb2;
         if (ind("##iNf", 697, 203, "NF", R.nch, w, "NF: notch manual (TNF - posição no MULTI 1 com SHIFT)")) R.nch = !R.nch;
         ind("##iCtcss", 756, 203, "CTCSS", false, w, "CTCSS: (não usado no receptor)");
-        ind("##iSter", 813, 203, "STEREO", r_.modo() == "WFM", w, "STEREO: acende no FM largo (WFM)");
+        ind("##iSter", 813, 203, "STEREO", r_->modo() == "WFM", w, "STEREO: acende no FM largo (WFM)");
     }
     // ---- a linha de informacoes ----
     {
@@ -838,9 +903,9 @@ void Ui::mb1Tela()
         ImGui::SetCursorScreenPos(Q(178, 220));
         if (ImGui::InvisibleButton("##stepMb", ImVec2(QD(78), QD(14)))) ImGui::OpenPopup("##passoMb");
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("STEP: passo do FD / FU e da roda do mouse no escopo (clique escolhe)");
-        const int g = grupoModo(r_.modo());
-        const float bw = (float)r_.banda();
-        const char* lado = g == 0 ? (r_.modo() == "USB" ? "U" : "L") : g == 1 ? "U" : "";
+        const int g = grupoModo(r_->modo());
+        const float bw = (float)r_->banda();
+        const char* lado = g == 0 ? (r_->modo() == "USB" ? "U" : "L") : g == 1 ? "U" : "";
         if (bw >= 1000) std::snprintf(b, sizeof b, "FLTR %s%s %.1f kHz", lado, *lado ? ":" : ":", bw / 1000.f);
         else std::snprintf(b, sizeof b, "FLTR %s%s %.0f Hz", lado, *lado ? ":" : ":", bw);
         txT(fL(), 7.6f, 264, 227, CI, b);
@@ -866,7 +931,7 @@ void Ui::mb1Tela()
         }
         std::snprintf(b, sizeof b, "CPU: %d %%", (int)std::lround(cpu_));
         txT(fL(), 7.6f, 499, 227, lig ? M_ROSA : IM_COL32(0x80, 0x40, 0x48, 255), b);
-        const double sr = r_.taxa();
+        const double sr = r_->taxa();
         std::snprintf(b, sizeof b, "SR: %.2f M", sr / 1e6);
         txT(fL(), 7.6f, 578, 227, lig ? IM_COL32(0xff, 0x90, 0x98, 255) : IM_COL32(0x80, 0x40, 0x48, 255), b);
         ImGui::SetCursorScreenPos(Q(576, 220));
@@ -874,18 +939,18 @@ void Ui::mb1Tela()
         if (ImGui::IsItemHovered()) ImGui::SetTooltip("SR: a taxa de amostragem = a largura do escopo (0,25 a 3,2 MSPS)\nClique escolhe (o mesmo que a tecla SPAN / F6)");
         if (R.sql > -90.f) std::snprintf(b, sizeof b, "SQL: %d dB", (int)std::lround(R.sql)); else std::snprintf(b, sizeof b, "SQL: OFF");
         txT(fL(), 7.6f, 660, 227, CI, b);
-        if (grupoModo(r_.modo()) == 1) std::snprintf(b, sizeof b, "CW: %d Hz", (int)std::lround(cwPitch_));
+        if (grupoModo(r_->modo()) == 1) std::snprintf(b, sizeof b, "CW: %d Hz", (int)std::lround(cwPitch_));
         else std::snprintf(b, sizeof b, "S: %s", lig ? leituraS(smAtual_).c_str() : "--");
         txT(fL(), 7.6f, 745, 227, lig ? M_AMAR : IM_COL32(0x70, 0x6c, 0x30, 255), b);
     }
     } else {
         // EXPAND: so uma linha com o essencial, embaixo dos icones
-        const std::string md = r_.modo();
-        std::snprintf(b, sizeof b, "VFO-%s  %s  %s", ativo_ == 0 ? "A" : "B", fmtFreqLcd(r_.vfo()).c_str(), (md == "NFM" ? std::string("FM") : md).c_str());
+        const std::string md = r_->modo();
+        std::snprintf(b, sizeof b, "VFO-%s  %s  %s", ativo_ == 0 ? "A" : "B", fmtFreqLcd(r_->vfo()).c_str(), (md == "NFM" ? std::string("FM") : md).c_str());
         txT(fL(), 9.f, 340, 89, lig ? M_BRANCO : IM_COL32(0x80, 0x84, 0x8c, 255), b);
-        const float bw = (float)r_.banda();
-        if (bw >= 1000) std::snprintf(b, sizeof b, "FLTR %.1f kHz   SR %.2f M   S: %s", bw / 1000.f, r_.taxa() / 1e6, lig ? leituraS(smAtual_).c_str() : "--");
-        else std::snprintf(b, sizeof b, "FLTR %.0f Hz   SR %.2f M   S: %s", bw, r_.taxa() / 1e6, lig ? leituraS(smAtual_).c_str() : "--");
+        const float bw = (float)r_->banda();
+        if (bw >= 1000) std::snprintf(b, sizeof b, "FLTR %.1f kHz   SR %.2f M   S: %s", bw / 1000.f, r_->taxa() / 1e6, lig ? leituraS(smAtual_).c_str() : "--");
+        else std::snprintf(b, sizeof b, "FLTR %.0f Hz   SR %.2f M   S: %s", bw, r_->taxa() / 1e6, lig ? leituraS(smAtual_).c_str() : "--");
         txT(fL(), 7.6f, 855, 89, CI, b, 1.f);
         ImGui::SetCursorScreenPos(Q(338, 80));
         if (ImGui::InvisibleButton("##fqExp", ImVec2(QD(200), QD(18)))) { entrando_ = !entrando_; entrada_.clear(); }
@@ -946,7 +1011,7 @@ void Ui::mb1Tela()
 void Ui::mb1Medidor()
 {
     ImDrawList* dl = ImGui::GetWindowDrawList();
-    const bool lig = r_.ligado();
+    const bool lig = r_->ligado();
     const float cx = 300.f, cy = 291.f, R1 = 163.f, R2 = 131.f;
     const ImU32 cw = lig ? IM_COL32(0xdc, 0xf6, 0xff, 255) : IM_COL32(0x70, 0x78, 0x80, 255);
     const ImU32 cv = lig ? IM_COL32(0xff, 0x4c, 0x66, 255) : IM_COL32(0x7c, 0x34, 0x3c, 255);
@@ -1040,7 +1105,7 @@ void Ui::mb1Medidor()
     }
     // ---- o pre-amplificador (VHF LNA / HF LNA) ----
     {
-        const bool vhf = r_.vfo() >= 30000000ULL;
+        const bool vhf = r_->vfo() >= 30000000ULL;
         const ImU32 c = pamp_ > 0 && lig ? M_AMAR : M_APAG;
         txT(fL(), 9.f, 378, 111, c, vhf ? "VHF LNA" : "HF LNA", 0.5f);
     }
@@ -1051,13 +1116,13 @@ void Ui::mb1Medidor()
 void Ui::mb1Escopo(float X0, float Y0, float X1, float Y1, float& yRegua)
 {
     ImDrawList* dl = ImGui::GetWindowDrawList();
-    const bool lig = r_.ligado();
+    const bool lig = r_->ligado();
     char b[64];
     // a regua (entre o espectro e a cachoeira): arrastavel - sobe a cachoeira e diminui o espectro
     yRegua = std::clamp(yRegua, Y0 + 40.f, Y1 - 45.f);
     const float yR0 = yRegua, yR1 = yR0 + 20.f;
     auto fotoX = [&](float sx) { return (sx - M.ox) / (M.k * kK); };
-    const double span = (taxaMostrada_ ? taxaMostrada_ : r_.taxa()) / (1.0 + zoom_);
+    const double span = (taxaMostrada_ ? taxaMostrada_ : r_->taxa()) / (1.0 + zoom_);
     const float xm0 = (X0 + X1) * 0.5f;
     const bool dir = dual_ && ativo_ == 1;
     const float xA0 = !dual_ ? X0 : dir ? xm0 + 1 : X0, xA1 = !dual_ ? X1 : dir ? X1 : xm0 - 1;
@@ -1127,7 +1192,7 @@ void Ui::mb1Escopo(float X0, float Y0, float X1, float Y1, float& yRegua)
                 {10100000, 10150000, "30M"}, {14000000, 14350000, "20M"}, {18068000, 18168000, "17M"}, {21000000, 21450000, "15M"},
                 {24890000, 24990000, "12M"}, {28000000, 29700000, "10M"}, {50000000, 54000000, "6M"}, {70000000, 70500000, "4M"},
                 {144000000, 148000000, "2M"}, {430000000, 440000000, "70CM"}};
-            for (const auto& x : bd) if (r_.vfo() >= x.lo && r_.vfo() <= x.hi) banda = x.n;
+            for (const auto& x : bd) if (r_->vfo() >= x.lo && r_->vfo() <= x.hi) banda = x.n;
             if (!banda) banda = "GEN";
             const float wB = txW(fL(), 8.f, banda) + 8.f;
             dl->AddRectFilled(Q(fotoX(xm) + 40.f, Y0 + 4), Q(fotoX(xm) + 40.f + wB, Y0 + 19), IM_COL32(0x1c, 0x4c, 0x7c, 220), QD(2));
@@ -1140,13 +1205,13 @@ void Ui::mb1Escopo(float X0, float Y0, float X1, float Y1, float& yRegua)
                 for (float y = sy; y < sy + hEsp; y += QD(7)) dl->AddLine(ImVec2(xo, y), ImVec2(xo, std::min(sy + hEsp, y + QD(4))), IM_COL32(0xf0, 0xb0, 0x40, 200), std::max(1.f, QD(1.2f)));
         }
         const Receptor& R = rx_[ativo_];
-        if ((R.nch || R.bef) && (r_.modo() == "USB" || r_.modo() == "LSB")) {
+        if ((R.nch || R.bef) && (r_->modo() == "USB" || r_->modo() == "LSB")) {
             const double nh = 150.0 * std::pow(3500.0 / 150.0, std::clamp(R.nch ? R.notch : R.cont, 0.f, 1.f));
-            const double fn = r_.modo() == "USB" ? (double)r_.vfo() + nh : (double)r_.vfo() - nh;
+            const double fn = r_->modo() == "USB" ? (double)r_->vfo() + nh : (double)r_->vfo() - nh;
             const float xn = (float)hzParaX(fn, xm, wm);
             dl->AddLine(ImVec2(xn, sy), ImVec2(xn, sy + hEsp), alfa(P_CIANO, 200), std::max(1.f, QD(1.5f)));
         }
-        regua(fotoX(xm), xA1, lo, hi, (double)r_.vfo());
+        regua(fotoX(xm), xA1, lo, hi, (double)r_->vfo());
         // a cachoeira (azul)
         {
             const ImVec2 C = Q(0, yR1), D = Q(0, Y1);
@@ -1164,18 +1229,24 @@ void Ui::mb1Escopo(float X0, float Y0, float X1, float Y1, float& yRegua)
         Receptor& O = rx_[o];
         const float xB0 = dir ? X0 : xm0 + 1, xB1 = dir ? xm0 - 1 : X1;
         dl->AddLine(Q(xm0, Y0), Q(xm0, Y1), IM_COL32(0x80, 0x88, 0x98, 255), std::max(1.f, QD(1.2f)));
-        subCentro_ = (double)O.f;
-        subSpan_ = span;
+        if (duas_) {   // MB1SDR: com dois aparelhos, a janela inteira do aparelho do outro VFO
+            const double txO = fftO_.taxa ? (double)fftO_.taxa : (double)outro()->taxa();
+            subSpan_ = txO / (1.0 + zoom_);
+            subCentro_ = (zoom_ < 0.01f && fftO_.centro) ? (double)fftO_.centro : (double)O.f;
+        } else {
+            subCentro_ = (double)O.f;
+            subSpan_ = span;
+        }
         // o espectro ate a regua e a cachoeira depois dela (subGap_ = a altura da regua)
         subFrac_ = (yR0 - Y0) / (Y1 - Y0);
         subGap_ = QD(yR1 - yR0);
         const ImVec2 A = Q(xB0, Y0), B = Q(xB1, Y1);
         escopoSub(A.x, A.y, B.x - A.x, B.y - A.y);
         subGap_ = 0.f;
-        const double lo = subCentro_ - span / 2, hi = subCentro_ + span / 2;
+        const double lo = subCentro_ - subSpan_ / 2, hi = subCentro_ + subSpan_ / 2;
         regua(xB0, xB1, lo, hi, (double)O.f);
         {
-            const float xc = (A.x + B.x) * 0.5f, hs = Q(0, yR0).y - A.y;
+            const float xc = A.x + (float)(((double)O.f - lo) / std::max(1.0, subSpan_)) * (B.x - A.x), hs = Q(0, yR0).y - A.y;
             for (float y = A.y; y < A.y + hs; y += QD(7)) dl->AddLine(ImVec2(xc, y), ImVec2(xc, std::min(A.y + hs, y + QD(4))), IM_COL32(0xf0, 0xb0, 0x40, 220), std::max(1.f, QD(1.2f)));
             txT(fL(), 7.f, xB0 + 6, Y0 + 11, IM_COL32(0xf0, 0xb0, 0x40, 255), o == 0 ? "VFO-A" : "VFO-B");
         }
@@ -1183,7 +1254,7 @@ void Ui::mb1Escopo(float X0, float Y0, float X1, float Y1, float& yRegua)
         ImGui::InvisibleButton("##subMb", ImVec2(std::max(1.f, B.x - A.x), std::max(1.f, B.y - A.y)));
         if (ImGui::IsItemHovered()) {
             ImGuiIO& io = ImGui::GetIO();
-            const double hz = lo + (io.MousePos.x - A.x) / std::max(1.f, B.x - A.x) * span;
+            const double hz = lo + (io.MousePos.x - A.x) / std::max(1.f, B.x - A.x) * subSpan_;
             dl->AddLine(ImVec2(io.MousePos.x, A.y), ImVec2(io.MousePos.x, Q(0, Y1).y), IM_COL32(255, 255, 255, 60));
             ImGui::SetTooltip("%s  (%s)\nClique: sintoniza o %s aqui   Duplo clique: passa a ouvir o %s\nRoda do mouse: um passo",
                               fmtFreq((uint64_t)std::max(0.0, hz)).c_str(), o == 0 ? "VFO-A" : "VFO-B", o == 0 ? "VFO-A" : "VFO-B", o == 0 ? "VFO-A" : "VFO-B");
@@ -1273,10 +1344,10 @@ void Ui::mb1Teclado()
         }
     // ---- os LEDs (REC, IND1, IND2, SHIFT) ----
     {
-        const bool lig = r_.ligado();
-        const bool busy = lig && r_.aoVivo() && sqlAberto_ && (R.sql > -90 || smAtual_ > 0.22f);
+        const bool lig = r_->ligado();
+        const bool busy = lig && r_->aoVivo() && sqlAberto_ && (R.sql > -90 || smAtual_ > 0.22f);
         tx(fP(), 6.8f, 1088, 38, M_ROT, "REC", 0.5f, 0.92f);
-        ledMb(1088, 55, 6.f, IM_COL32(0xff, 0x34, 0x2c, 255), r_.som().gravando());
+        ledMb(1088, 55, 6.f, IM_COL32(0xff, 0x34, 0x2c, 255), r_->som().gravando());
         tx(fP(), 6.8f, 1088, 79, M_ROT, "IND1", 0.5f, 0.92f);
         ledMb(1088, 96, 6.f, IM_COL32(0x50, 0xf0, 0x60, 255), busy);
         tx(fP(), 6.8f, 1088, 120, M_ROT, "IND2", 0.5f, 0.92f);
@@ -1290,7 +1361,7 @@ void Ui::mb1Teclado()
     }
     // ---- REC, PLAY, memorias e frequencia ----
     {
-        const bool grav = r_.som().gravando();
+        const bool grav = r_->som().gravando();
         const int k1 = teclaMb("kRec", cx[4], ry[0], cx[4] + cw, ry[0] + rh, grav ? "REC: parar a gravação" : "REC: gravar o áudio (pasta Gravacoes)", nullptr, grav);
         dl->AddCircleFilled(Q(cx[4] + cw * 0.5f, ry[0] + rh * 0.5f), QD(4.5f), grav && std::fmod(agora(), 1.0) < 0.6 ? IM_COL32(0xff, 0x40, 0x30, 255) : IM_COL32(0xe0, 0x50, 0x48, 255), 16);
         if (k1 == 1) alternarGravacao();
@@ -1301,7 +1372,7 @@ void Ui::mb1Teclado()
         if (k2 == 2) { PlaySoundA(nullptr, nullptr, 0); aviso("PLAY parado"); }
         if (teclaTxt("kMin", "M.IN", cx[4], ry[1], cx[4] + cw, ry[1] + rh, 9.f, M_ROT, "M.IN: gravar a frequência nas memórias (abre a lista com o nome)") == 1) {
             memAberta_ = true;
-            std::snprintf(memNome_, sizeof memNome_, "%s %s", fmtFreq(r_.vfo()).c_str(), r_.modo().c_str());
+            std::snprintf(memNome_, sizeof memNome_, "%s %s", fmtFreq(r_->vfo()).c_str(), r_->modo().c_str());
         }
         if (teclaTxt("kMrd", "M.RD", cx[5], ry[1], cx[5] + cw, ry[1] + rh, 9.f, M_ROT, "M.RD: o dial passa os canais de memória (V/M)", nullptr, R.memModo) == 1) {
             if (mem_.empty()) aviso("Nenhuma memória gravada (M.IN grava)");
@@ -1310,7 +1381,7 @@ void Ui::mb1Teclado()
                 if (R.memModo) {
                     int mais = 0; long long melhor = LLONG_MAX;
                     for (int i = 0; i < (int)mem_.size(); ++i) {
-                        const long long dd = std::llabs((long long)mem_[i].f - (long long)r_.vfo());
+                        const long long dd = std::llabs((long long)mem_[i].f - (long long)r_->vfo());
                         if (dd < melhor) { melhor = dd; mais = i; }
                     }
                     R.memCanal = mais; sintonizarMemoria((size_t)mais);
@@ -1323,7 +1394,7 @@ void Ui::mb1Teclado()
         auto passoF = [&](int sinal, bool grande) {
             if (R.lock) { aviso("LOCK: dial travado"); return; }
             const int64_t ps = grande ? 100000 : std::max(1, passo_);
-            const int64_t nf = std::max<int64_t>(1000, ((int64_t)r_.vfo() / ps + sinal) * ps);
+            const int64_t nf = std::max<int64_t>(1000, ((int64_t)r_->vfo() / ps + sinal) * ps);
             R.memModo = false;
             sintonizar((uint64_t)nf, false); R.f = (uint64_t)nf;
         };
@@ -1387,7 +1458,7 @@ void Ui::mb1Teclado()
         auto copia = [&](int de, int para) {
             sincronizarAtivo();
             rx_[para].f = rx_[de].f; rx_[para].modo = rx_[de].modo; rx_[para].fil = rx_[de].fil; rx_[para].memModo = false;
-            if (para == ativo_) { r_.setModo(rx_[para].modo); sintonizar(rx_[para].f, false); aplicarFiltro(); muteAte_ = agora() + 0.25; }
+            if (para == ativo_) { r_->setModo(rx_[para].modo); sintonizar(rx_[para].f, false); aplicarFiltro(); muteAte_ = agora() + 0.25; }
         };
         if (seta("kAb", 1, 0, "A>B: copia o VFO-A para o VFO-B") == 1) { copia(0, 1); aviso("A > B", 1.0); }
         if (seta("kBa", 2, 1, "A<B: copia o VFO-B para o VFO-A") == 1) { copia(1, 0); aviso("B > A", 1.0); }
@@ -1399,7 +1470,7 @@ void Ui::mb1Teclado()
             const int k = teclaTxt("kSplt", "SPLT", cx[5], y0, cx[5] + cw, y1, 9.5f, M_ROT,
                                    "SPLT: um VFO para ouvir e o outro marcado como TX\nSegurar: QUICK SPLIT (o outro VFO vai 5 kHz acima)", nullptr, split);
             if (k == 1) txVfo_ = split ? ativo_ : 1 - ativo_;
-            if (k == 2) { sincronizarAtivo(); O.f = r_.vfo() + 5000; O.modo = r_.modo(); txVfo_ = 1 - ativo_; aviso("QUICK SPLIT +5 kHz"); }
+            if (k == 2) { sincronizarAtivo(); O.f = r_->vfo() + 5000; O.modo = r_->modo(); txVfo_ = 1 - ativo_; aviso("QUICK SPLIT +5 kHz"); }
         }
     }
     // ---- as teclas de canto e o dial ----
@@ -1551,6 +1622,49 @@ void Ui::mb1Direita()
     Receptor& O = rx_[1 - ativo_];
     char d[360];
     float di, dO;
+    if (duas_) {
+        // MB1SDR - dois aparelhos: cada VFO com os seus botoes, sempre (sem SHIFT, sem trocar de VFO):
+        //   em cima, a esquerda = AF / RF do VFO-A;  em cima, a direita = AF / RF do VFO-B;
+        //   MULTI 1 = SQL do VFO-A (miolo) e SQL do VFO-B (saia)
+        auto afRf = [&](const char* id, int rx, float cx) {
+            Receptor& K = rx_[rx];
+            const char* n = rx == 0 ? "A" : "B";
+            char d2[300];
+            std::snprintf(d2, sizeof d2, "AF %s (miolo): volume do VFO-%s (%d%%)\nRF %s (saia): ganho do aparelho do VFO-%s (%d dB)%s",
+                          n, n, (int)std::lround(K.af), n, n, (int)std::lround(49.6f * K.rf / 100.f),
+                          rx == ativo_ ? "\n(o VFO ouvido)" : "");
+            if (knobMb(id, cx, 80, 43, K.af / 100.f, K.rf / 100.f, di, dO, d2, true)) {
+                K.af = std::clamp(K.af + di * 100.f, 0.f, 100.f);
+                K.rf = std::clamp(K.rf + dO * 100.f, 0.f, 100.f);
+            }
+        };
+        rotKnobMb(1293, 24, 36, 7.3f, "AF A", "RF A", nullptr, nullptr);     // como na tela: A na esquerda, B na direita
+        afRf("gSpd", 0, 1293);
+        rotKnobMb(1427, 24, 36, 7.3f, "AF B", "RF B", nullptr, nullptr);
+        afRf("gAf", 1, 1427);
+        rotKnobMb(1293, 153, 165, 7.3f, "SQL A", "SQL B", nullptr, nullptr);
+        tx(fP(), 7.3f, 1287, 275, M_ROT, "MULTI 1", 0.5f, 0.95f);
+        {
+            char sa[24], sb[24];
+            auto fmtSql = [](char* b, size_t n, float v) { if (v <= -90.f) std::snprintf(b, n, "aberto"); else std::snprintf(b, n, "%+d dB", (int)std::lround(v)); };
+            fmtSql(sa, sizeof sa, rx_[0].sql); fmtSql(sb, sizeof sb, rx_[1].sql);
+            std::snprintf(d, sizeof d, "SQL A (miolo): squelch do VFO-A (%s)\nSQL B (saia): squelch do VFO-B (%s)\nTudo para a esquerda = aberto. Roda do mouse em cima do miolo ou da saia.", sa, sb);
+            if (knobMb("gMon", 1293, 215, 43, (rx_[0].sql + 90.f) / 120.f, (rx_[1].sql + 90.f) / 120.f, di, dO, d, true)) {
+                for (int rx = 0; rx < 2; ++rx) {
+                    const float dv = rx == 0 ? di : dO;
+                    if (dv == 0) continue;
+                    Receptor& K = rx_[rx];
+                    K.sql = std::clamp(K.sql + dv * 120.f, -90.f, 30.f);
+                    if (K.sql <= -90.f) sqlAuto_[rx] = false;
+                    if (rx == ativo_) { sql_ = K.sql; sqlAplicado_ = K.sql; }
+                    char a[40];
+                    if (K.sql <= -90.f) std::snprintf(a, sizeof a, "SQL %s aberto", rx == 0 ? "A" : "B");
+                    else std::snprintf(a, sizeof a, "SQL %s %+d dB", rx == 0 ? "A" : "B", (int)std::lround(K.sql));
+                    aviso(a, 1.0);
+                }
+            }
+        }
+    } else {
     // ---- MIC/SPD - DRIVE (VOX - COMP com SHIFT): o escopo e o squelch automatico ----
     rotKnobMb(1293, 20, 32, 7.3f, "MIC/SPD", "DRIVE", "VOX", "COMP");
     if (!shift_) {
@@ -1569,12 +1683,18 @@ void Ui::mb1Direita()
         }
     }
     // ---- AF - RF ----
-    rotKnobMb(1427, 22, 34, 7.3f, "AF", "RF", nullptr, nullptr);
-    std::snprintf(d, sizeof d, "AF (miolo): volume do VFO-%s (%d%%)\nRF (saia): ganho do dongle (%d dB)", ativo_ == 0 ? "A" : "B",
-                  (int)std::lround(A.af), (int)std::lround(49.6f * A.rf / 100.f));
-    if (knobMb("gAf", 1427, 80, 43, A.af / 100.f, A.rf / 100.f, di, dO, d, true)) {
-        A.af = std::clamp(A.af + di * 100.f, 0.f, 100.f);
-        A.rf = std::clamp(A.rf + dO * 100.f, 0.f, 100.f);
+    rotKnobMb(1427, 20, 32, 7.3f, "AF", "RF", "AF2", "RF2");
+    {   // AF-RF: o VFO ouvido; com SHIFT (AF2 / RF2), o OUTRO VFO - com dois aparelhos os dois tocam juntos
+        Receptor& K = shift_ ? O : A;
+        const char* qual = (shift_ ? (ativo_ == 0 ? "B" : "A") : (ativo_ == 0 ? "A" : "B"));
+        std::snprintf(d, sizeof d, "%sAF (miolo): volume do VFO-%s (%d%%)\nRF (saia): ganho do aparelho do VFO-%s (%d dB)\n%s",
+                      shift_ ? "(SHIFT) " : "", qual, (int)std::lround(K.af), qual, (int)std::lround(49.6f * K.rf / 100.f),
+                      shift_ ? "Sem SHIFT: o VFO ouvido" : "SHIFT: AF2 / RF2 = o volume e o RF do outro VFO");
+        if (knobMb("gAf", 1427, 80, 43, K.af / 100.f, K.rf / 100.f, di, dO, d, true)) {
+            K.af = std::clamp(K.af + di * 100.f, 0.f, 100.f);
+            K.rf = std::clamp(K.rf + dO * 100.f, 0.f, 100.f);
+            if (shift_ && di != 0) { char a[48]; std::snprintf(a, sizeof a, "VOL VFO-%s %d%%", qual, (int)std::lround(K.af)); aviso(a, 1.0); }
+        }
     }
     // ---- MON - SQL (TNF.P - TNF.W com SHIFT) = MULTI 1 ----
     rotKnobMb(1293, 149, 162, 7.3f, "MON", "SQL", "TNF.P", "TNF.W");
@@ -1602,11 +1722,12 @@ void Ui::mb1Direita()
             if (dO < -0.002f) A.nchLargo = false;
         }
     }
+    }
     // ---- SHIFT - WIDTH (NB1 - NB2 com SHIFT) = MULTI 2 ----
     rotKnobMb(1427, 149, 162, 7.3f, "SHIFT", "WIDTH", "NB1", "NB2");
     tx(fP(), 7.3f, 1421, 275, M_ROT, "MULTI 2", 0.5f, 0.95f);
     if (!shift_) {
-        const int g = grupoModo(r_.modo());
+        const int g = grupoModo(r_->modo());
         float& hi = filHi_[g][A.fil];
         float& lo = filLo_[g][A.fil];
         float tIn = 0.5f, tOut = 0.5f;
@@ -1663,7 +1784,7 @@ void Ui::mb1Direita()
             if (pequena("kVox", 0, 2, "VOX", "F13", lig || sqlMedindo_, "VOX: (num receptor) squelch automático\nClique: mede o ruído por 4 s e fecha o squelch logo acima\nAceso: clique de novo para abrir") == 1) {
                 if (sqlMedindo_) { sqlMedindo_ = false; A.sql = -90.f; sql_ = -90.f; sqlAplicado_ = -90.f; sqlAuto_[ativo_] = false; }
                 else if (lig) { A.sql = -90.f; sql_ = -90.f; sqlAplicado_ = -90.f; sqlAuto_[ativo_] = false; aviso("Squelch aberto"); }
-                else if (r_.aoVivo()) { sqlMedindo_ = true; sqlAmostras_.clear(); sqlIni_ = agora(); sqlUlt_ = 0; }
+                else if (r_->aoVivo()) { sqlMedindo_ = true; sqlAmostras_.clear(); sqlIni_ = agora(); sqlUlt_ = 0; }
             }
         }
         if (pequena("kSql", 0, 3, "SQL", "F14", A.sql > -90.f, "SQL: liga / desliga o squelch (o nível fica no MULTI 1 - saia)") == 1) {
@@ -1680,7 +1801,7 @@ void Ui::mb1Direita()
         if (pequena("kIq", 1, 2, "IQ", "F17", Config::instance().dcRemove(), "IQ: tirar o risco do DC do centro do escopo") == 1) {
             auto& c = Config::instance(); c.set("dc_remove", !c.dcRemove());
         }
-        if (pequena("kXvtr", 1, 3, "XVTR", "F18", r_.xvtr() != 0, "XVTR: conversor (upconverter) - Ham It Up, SpyVerter...") == 1) ImGui::OpenPopup("##xvtrMb");
+        if (pequena("kXvtr", 1, 3, "XVTR", "F18", r_->xvtr() != 0, "XVTR: conversor (upconverter) - Ham It Up, SpyVerter...") == 1) ImGui::OpenPopup("##xvtrMb");
         if (pequena("kStep", 2, 0, "STEP", "F19", false, "STEP: passo do FD / FU, do D/I e da roda do mouse no escopo") == 1) ImGui::OpenPopup("##passoMb");
         auto zoomPasso = [&](int s) {
             static const float z[6] = {0, 1, 3, 7, 15, 31};
@@ -1688,7 +1809,7 @@ void Ui::mb1Direita()
             for (int k = 0; k < 6; ++k) if (std::fabs(zoom_ - z[k]) < 0.3f) i = k;
             i = std::clamp(i + s, 0, 5);
             zoom_ = z[i]; centrarParaZoom(true);
-            char a[40]; const double sp = r_.taxa() / (1.0 + zoom_);
+            char a[40]; const double sp = r_->taxa() / (1.0 + zoom_);
             if (sp >= 1e6) std::snprintf(a, sizeof a, "SPAN %.2f MHz", sp / 1e6); else std::snprintf(a, sizeof a, "SPAN %.0f kHz", sp / 1000.0);
             aviso(a, 1.0);
         };
@@ -1852,7 +1973,7 @@ void Ui::softMb(int i, bool longo)
         case 1: ImGui::OpenPopup("##bsMb"); break;
         case 2: case 3:
             if (longo) {
-                qm_.insert(qm_.begin(), Rapida{r_.vfo(), r_.modo()});
+                qm_.insert(qm_.begin(), Rapida{r_->vfo(), r_->modo()});
                 if (qm_.size() > 10) qm_.resize(10);
                 qmIdx_ = -1;
                 aviso("Gravado na memória rápida (QMEM)");
@@ -1877,7 +1998,7 @@ void Ui::softMb(int i, bool longo)
         switch (i) {
         case 0: if (longo) padrao(); else autoCachoeira(); break;
         case 1: pausa_ = !pausa_; if (pausa_) congelado_ = suave_; break;
-        case 2: modoCentro_ = !modoCentro_; if (modoCentro_) r_.centralizar(r_.centroSemDc(r_.vfo())); break;
+        case 2: modoCentro_ = !modoCentro_; if (modoCentro_) r_->centralizar(r_->centroSemDc(r_->vfo())); break;
         case 3: ifOn_ = !ifOn_; break;
         case 4: abrirRadar(); break;
         case 5: escolherDecoder(Decoders::SATELITES, true); decAberta_ = true; break;
@@ -1900,14 +2021,14 @@ void Ui::mb1Popups()
         for (unsigned t : tx) {
             char r[64];
             std::snprintf(r, sizeof r, "%.3f MSPS  (janela de %.2f MHz)%s", t / 1e6, t / 1e6, t > 2400000 ? "  *" : "");
-            if (ImGui::MenuItem(r, nullptr, c.sampleRate() == t)) { c.set("sample_rate", (long long)t); r_.aplicarConfig(); aviso(r, 1.5); }
+            if (ImGui::MenuItem(r, nullptr, c.sampleRate() == t)) { c.set("sample_rate", (long long)t); r_->aplicarConfig(); aviso(r, 1.5); }
         }
         ImGui::TextDisabled("* acima de 2,4 MSPS alguns dongles RTL-SDR perdem amostras");
         ImGui::Separator();
         ImGui::TextDisabled("ZOOM (dentro da taxa)");
         const float z[6] = {0, 1, 3, 7, 15, 31};
         for (float zz : z) {
-            const double sp = r_.taxa() / (1.0 + zz);
+            const double sp = r_->taxa() / (1.0 + zz);
             char t[48];
             if (sp >= 1e6) std::snprintf(t, sizeof t, "%.2f MHz", sp / 1e6); else std::snprintf(t, sizeof t, "%.0f kHz", sp / 1000.0);
             if (ImGui::MenuItem(t, nullptr, std::fabs(zoom_ - zz) < 0.3f)) { zoom_ = zz; centrarParaZoom(true); }
@@ -1941,11 +2062,262 @@ void Ui::mb1Popups()
         const struct { const char* n; uint64_t hz; } op[] = {{"Desligado", 0}, {"125 MHz (Ham It Up, SpyVerter)", 125000000},
                                                              {"120 MHz", 120000000}, {"100 MHz", 100000000}, {"106,25 MHz", 106250000}};
         for (const auto& o : op)
-            if (ImGui::MenuItem(o.n, nullptr, r_.xvtr() == o.hz)) {
-                r_.setXvtr(o.hz);
+            if (ImGui::MenuItem(o.n, nullptr, r_->xvtr() == o.hz)) {
+                r_->setXvtr(o.hz);
                 if (o.hz) c.set("qmode", std::string("off"));
-                r_.aplicarConfig();
+                r_->aplicarConfig();
             }
         ImGui::EndPopup();
     }
+}
+
+// ===========================================================================
+//  MB1SDR: dois aparelhos - o VFO-A num dongle e o VFO-B noutro (por exemplo dois
+//  RTL-TCP: um em HF e outro em VHF). O receptor OUVIDO e r_; o do outro VFO e
+//  outro(). Os dois tocam ao mesmo tempo (ouvirOs2_), cada um com o seu volume.
+// ===========================================================================
+
+// liga / desliga o modo de dois aparelhos (sempre a partir do VFO-A)
+void Ui::ligarDuas(bool on)
+{
+    if (on == duas_) return;
+    std::string e;
+    if (ativo_ == 1) ativar(0);          // a troca e feita com o VFO-A ouvido (o aparelho dele)
+    if (!on) {
+        duas_ = false;
+        rb_->ligar(false, e);
+        AjusteAudio mudo;                // o aparelho do B fica calado
+        mudo.mudo = true;
+        rb_->som().ajustar(mudo);
+        ra_->setMedirCanal(true);
+        aviso("VFO-B: agora no mesmo aparelho do VFO-A", 2.5);
+    } else {
+        duas_ = true;
+        fftO_ = QuadroFft(); suaveO_.clear(); pisoO_ = 1e9f; quadrosOutro_ = 0; autoOutroFeito_ = false;
+        ajOutroPrimeiro_ = true; rfOutroAplicado_ = -1.f; tentarOutroAte_ = 0; assinOutro_.clear(); erroOutro_.clear();
+        dual_ = true;                    // o escopo do VFO-B ao lado (RX2)
+        if (subTex_) criarTexturaSub();
+        aviso("VFO-B com aparelho próprio", 2.5);
+    }
+    Config::instance().set("b_ativo", duas_);
+}
+
+void Ui::atualizarDuas()
+{
+    std::string e;
+    if (pedidoConectarB_) {              // CONFIGURACAO > VFO-B > Conectar (feito aqui, fora da janela)
+        pedidoConectarB_ = false;
+        auto& c = Config::instance();
+        const std::string tp = c.str("b_device");
+        std::string arg = tp == "rtltcp" ? c.str("b_rtltcp_host") + ":" + c.str("b_rtltcp_port") : c.str("b_serial");
+        if (tp.empty()) erroOutro_ = "escolha o aparelho do VFO-B";
+        else if (!rb_->selecionar(tp, arg, e)) { erroOutro_ = e; aviso("VFO-B: " + e, 4.0); }
+        else {
+            erroOutro_.clear(); tentarOutroAte_ = 0; assinOutro_.clear(); rfOutroAplicado_ = -1.f; ajOutroPrimeiro_ = true;
+            quadrosOutro_ = 0; autoOutroFeito_ = false; pisoO_ = 1e9f;
+            if (duas_ && ra_->ligado() && !rb_->ligar(true, e)) erroOutro_ = e;
+        }
+    }
+    if (pedidoDuas_ >= 0) { const bool on = pedidoDuas_ == 1; pedidoDuas_ = -1; ligarDuas(on); }
+    if (!duas_) {
+        if (r_ != ra_) { r_->setMedirCanal(false); r_ = ra_; r_->setMedirCanal(true); }
+        if (rb_->ligado()) rb_->ligar(false, e);
+        return;
+    }
+    // o aparelho ouvido e o do VFO em uso (no inicio do programa o INI pode vir com o B ouvido)
+    {
+        Radio* certo = ativo_ == 0 ? ra_ : rb_;
+        if (r_ != certo) {
+            r_->setMedirCanal(false);
+            const bool ligava = r_->ligado();
+            r_ = certo;
+            r_->setMedirCanal(true);
+            if (ligava && !r_->ligado()) r_->ligar(true, e);
+            const Receptor& R = rx_[ativo_];
+            if (R.modo != r_->modo()) r_->setModo(R.modo);
+            if (r_->vfo() != R.f) r_->sintonizar(R.f);
+            ajPrimeiro_ = true; rfAplicado_ = -1.f;
+        }
+    }
+    Radio* O = outro();
+    const int o = 1 - ativo_;
+    Receptor& R = rx_[o];
+    // liga e desliga junto com o ouvido (sem ficar tentando: a cada 10 s se der erro)
+    if (r_->ligado()) {
+        if (!O->ligado() && agora() > tentarOutroAte_) {
+            if (!O->ligar(true, e)) {
+                erroOutro_ = e; tentarOutroAte_ = agora() + 10.0;
+                aviso(std::string("VFO-") + (o == 0 ? "A" : "B") + ": " + e, 4.0);
+            } else erroOutro_.clear();
+        }
+    } else if (O->ligado()) O->ligar(false, e);
+    r_->setMedirCanal(true);
+    O->setMedirCanal(false);
+    // o outro VFO: sintonia, modo, filtro, RF, RIT e o que e comum (ATT, PREAMP, NB2)
+    if (O->vfo() != R.f) O->sintonizar(R.f);
+    if (O->modo() != R.modo) O->setModo(R.modo);
+    {
+        const int g = grupoModo(R.modo);
+        int bw = (int)std::lround(filHi_[g][R.fil]);
+        if (g == 2) bw *= 2;
+        bw = std::max(50, bw);
+        if (O->banda() != bw) O->setBanda(bw);
+    }
+    if (R.rf != rfOutroAplicado_) { rfOutroAplicado_ = R.rf; O->setGanho((int)std::lround(4.96f * R.rf)); }
+    O->setRit(R.ritOn ? R.rit : 0);
+    O->setGanhoExtraDb(-6.f * att_);
+    O->setPreamp(pamp_);
+    O->setNb2(R.nb2, nb2Nivel_);
+    {   // a configuracao comum (taxa, PPM, AGC do dongle, Bias-T, FFT) mudou: vale tambem no outro
+        auto& c = Config::instance();
+        const std::string a = std::to_string(c.sampleRate()) + "/" + std::to_string(c.ppm()) + "/" + (c.agc() ? "1" : "0") +
+                              (c.biasT() ? "1" : "0") + "/" + std::to_string(c.fftSize()) + "/" + c.qmode();
+        if (a != assinOutro_) { if (!assinOutro_.empty()) O->aplicarConfig(); assinOutro_ = a; }
+    }
+    // o espectro do outro aparelho (escopo do Sub RX, S-meter / BUSY do outro, squelch dele)
+    {
+        QuadroFft q;
+        if (O->pegarFft(q)) {
+            fftO_ = std::move(q);
+            const int nb = (int)fftO_.bins.size();
+            if ((int)suaveO_.size() != nb) suaveO_.assign(fftO_.bins.begin(), fftO_.bins.end());
+            else for (int i = 0; i < nb; ++i) suaveO_[i] += ((float)fftO_.bins[i] - suaveO_[i]) * 0.45f;
+            if (nb > 64) {   // o piso do ruido dele: percentil 30 (sem as beiradas)
+                std::vector<int8_t> v(fftO_.bins.begin() + nb / 10, fftO_.bins.end() - nb / 10);
+                std::nth_element(v.begin(), v.begin() + v.size() * 3 / 10, v.end());
+                const float p = (float)v[v.size() * 3 / 10];
+                pisoO_ = pisoO_ > 1e8f ? p : pisoO_ + (p - pisoO_) * 0.08f;
+            }
+            ++quadrosOutro_;
+        }
+        // o AUTO da cachoeira do outro aparelho (o piso dele e outro: HF x VHF): uma vez quando chega o
+        // espectro dele e de novo a cada TUNE / AUTO
+        if (!autoOutroFeito_ && quadrosOutro_ > 20 && pisoO_ < 1e8f) {
+            const float acima = (R.acima > -900.f && R.acima != -1.f) ? R.acima : wfAcimaPiso_;
+            const float rcal = R.rangeCal > 0.f ? R.rangeCal : wfRangeCal_;
+            R.range = std::clamp(std::round(rcal), 20.f, 120.f);
+            R.brilho = std::clamp(std::round((pisoO_ + acima) * 2.f + 100.f), 0.f, 200.f);
+            if (R.paleta < 0) R.paleta = paleta_;
+            autoOutroFeito_ = true;
+        }
+    }
+    // o audio do outro VFO (o volume e os filtros dele)
+    {
+        bool sqlAberto = true;
+        if (R.sql > -90.f && !fftO_.bins.empty() && fftO_.taxa) {
+            double f0, f1;
+            faixaRx(o, f0, f1);
+            const int nb = (int)fftO_.bins.size();
+            auto bin = [&](double f) { return std::clamp((int)std::lround((f - (double)fftO_.centro) / fftO_.taxa * nb + nb / 2.0), 0, nb - 1); };
+            int a = bin(f0), b = bin(f1);
+            if (a > b) std::swap(a, b);
+            float pk = -200.f;
+            for (int i = a; i <= b; ++i) pk = std::max(pk, (float)fftO_.bins[i]);
+            // a mesma escala do squelch do VFO ouvido (Ui::novoQuadroFft: peakDbSql_)
+            const auto& cc = Config::instance();
+            const bool hf = (f0 + f1) * 0.5 < 30e6;
+            const float desloc = (float)(hf ? cc.num("s9_hf", -94) + 94 : cc.num("s9_vhf", -93) + 93);
+            const float db = std::clamp((pk <= -199.f ? -120.f : std::min(0.f, pk + 15.f)) - desloc, -120.f, 0.f);
+            static double ultAberto = 0;
+            if (db >= R.sql) ultAberto = agora();
+            sqlAberto = db >= R.sql || (agora() - ultAberto < sqlHang_);
+        }
+        AjusteAudio a;
+        a.mudo = R.mute || sendMudo_ || !O->ligado() || (!ouvirOs2_ && !monSolo_) || !sqlAberto;
+        a.volume = R.af <= 0 ? 0.f : (float)(std::pow(R.af / 100.0, 1.5) * 8.0);
+        a.nb = R.nb1 ? nbNivel_ / 100.f : 0.f;
+        a.nrEsp = R.nr2;
+        a.nrEspForca = (int)std::lround(nrEspForca_);
+        a.nr = R.nr1 ? nrNivel_ / 100.f : 0.f;
+        a.tom = (int)std::lround(tom_);
+        a.notch = R.nch; a.notchLargo = R.nchLargo;
+        a.notchHz = (float)(150.0 * std::pow(3500.0 / 150.0, std::clamp(R.notch, 0.f, 1.f)));
+        a.bef = R.bef; a.befHz = (float)(150.0 * std::pow(3500.0 / 150.0, std::clamp(R.cont, 0.f, 1.f)));
+        a.aNotch = R.anch; a.bc = R.bc;
+        a.apf = R.apf; a.apfHz = cwPitch_;
+        a.proc = proc_; a.procNivel = procNivel_;
+        if (ajOutroPrimeiro_ || !a.igual(ajOutro_)) { O->som().ajustar(a); ajOutro_ = a; ajOutroPrimeiro_ = false; }
+    }
+}
+
+// CONFIGURACAO > VFO-B: o segundo aparelho
+void Ui::configVfoB()
+{
+    auto& c = Config::instance();
+    if (!cfgBLido_) {
+        cfgBLido_ = true;
+        const std::string tp = c.str("b_device", "rtltcp");
+        cfgBTipo_ = tp == "rtlsdr" ? 0 : tp == "sdrplay" ? 2 : 1;
+        std::snprintf(cfgBHost_, sizeof cfgBHost_, "%s", c.str("b_rtltcp_host", "127.0.0.1").c_str());
+        cfgBPorta_ = (int)c.num("b_rtltcp_port", 1234);
+    }
+    ImGui::SeparatorText("VFO-B (segundo aparelho)");
+    bool on = duas_;
+    if (ImGui::Checkbox("VFO-B com aparelho próprio (um dongle em cada VFO)", &on)) {
+        if (on) pedidoConectarB_ = true;
+        pedidoDuas_ = on ? 1 : 0;
+    }
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Ligado: o VFO-A usa o aparelho de cima e o VFO-B o daqui de baixo (por exemplo um\n"
+                          "RTL-TCP em HF e outro em VHF). Os dois recebem ao mesmo tempo e o escopo do VFO-B\n"
+                          "aparece ao lado (RX2 / Sub RX).\nDesligado: o VFO-B usa o mesmo aparelho do VFO-A (como antes).");
+    if (!duas_ && !on) return;
+    const char* tipos[] = {"RTL-SDR (USB)", "RTL-TCP (rede)", "SDRplay"};
+    ImGui::AlignTextToFramePadding(); ImGui::TextUnformatted("Tipo (VFO-B)"); ImGui::SameLine(170 * s_); ImGui::SetNextItemWidth(300 * s_);
+    ImGui::Combo("##btipo", &cfgBTipo_, tipos, 3);
+    if (cfgBTipo_ == 1) {
+        ImGui::AlignTextToFramePadding(); ImGui::TextUnformatted("Endereço (IP)"); ImGui::SameLine(170 * s_); ImGui::SetNextItemWidth(300 * s_);
+        ImGui::InputText("##bhost", cfgBHost_, sizeof cfgBHost_);
+        ImGui::AlignTextToFramePadding(); ImGui::TextUnformatted("Porta"); ImGui::SameLine(170 * s_); ImGui::SetNextItemWidth(300 * s_);
+        ImGui::InputInt("##bporta", &cfgBPorta_, 0);
+    } else {
+        const std::string alvo = cfgBTipo_ == 0 ? "rtlsdr" : "sdrplay";
+        std::vector<int> idx;
+        for (int i = 0; i < (int)lista_.size(); ++i)
+            if (lista_[i].tipo == alvo && !(ra_->temDispositivo() && ra_->tipo() == alvo && ra_->serial() == lista_[i].serial)) idx.push_back(i);
+        std::string atual = idx.empty() ? std::string("(nenhum - clique em Procurar)") : std::string();
+        int sel = 0;
+        for (int k = 0; k < (int)idx.size(); ++k) if (idx[k] == cfgBDisp_) sel = k;
+        if (!idx.empty()) atual = lista_[idx[sel]].nome + "  [" + lista_[idx[sel]].serial + "]";
+        ImGui::AlignTextToFramePadding(); ImGui::TextUnformatted("Dispositivo (VFO-B)"); ImGui::SameLine(170 * s_); ImGui::SetNextItemWidth(300 * s_);
+        if (ImGui::BeginCombo("##bdisp", atual.c_str())) {
+            for (int k = 0; k < (int)idx.size(); ++k) {
+                const auto& d = lista_[idx[k]];
+                const std::string t = d.nome + "  [" + d.serial + "]";
+                if (ImGui::Selectable(t.c_str(), k == sel)) cfgBDisp_ = idx[k];
+            }
+            ImGui::EndCombo();
+        }
+        if (!idx.empty() && cfgBDisp_ < 0) cfgBDisp_ = idx[0];
+        ImGui::SameLine();
+        if (ImGui::Button("Procurar##b")) lista_ = Radio::listar(ra_->temDispositivo() ? ra_->tipo() : std::string(), ra_->serial(), cfgBTipo_ == 2);
+    }
+    if (ImGui::Button("Conectar o VFO-B")) {
+        const std::string tp = cfgBTipo_ == 0 ? "rtlsdr" : cfgBTipo_ == 2 ? "sdrplay" : "rtltcp";
+        c.set("b_device", tp);
+        if (cfgBTipo_ == 1) {
+            c.set("b_rtltcp_host", std::string(cfgBHost_));
+            c.set("b_rtltcp_port", cfgBPorta_);
+            c.set("b_serial", std::string());
+        } else if (cfgBDisp_ >= 0 && cfgBDisp_ < (int)lista_.size()) c.set("b_serial", lista_[cfgBDisp_].serial);
+        pedidoConectarB_ = true;
+        if (!duas_) pedidoDuas_ = 1;
+    }
+    ImGui::SameLine();
+    {
+        const char* st;
+        ImU32 cor;
+        if (!erroOutro_.empty()) { st = erroOutro_.c_str(); cor = IM_COL32(0xff, 0x70, 0x60, 255); }
+        else if (!rb_->temDispositivo()) { st = "sem aparelho"; cor = IM_COL32(0xb0, 0xb0, 0xb0, 255); }
+        else if (rb_->aoVivo()) { st = "recebendo"; cor = IM_COL32(0x70, 0xf0, 0x80, 255); }
+        else if (rb_->ligado()) { st = "ligado, sem dados ainda"; cor = IM_COL32(0xf0, 0xd0, 0x60, 255); }
+        else { st = "conectado (liga com o POWER)"; cor = IM_COL32(0xb0, 0xd0, 0xff, 255); }
+        ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(cor), "%s", st);
+    }
+    if (ImGui::Checkbox("Ouvir os dois VFOs ao mesmo tempo", &ouvirOs2_)) c.set("b_dois_audios", ouvirOs2_);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Ligado: o áudio do VFO-A e o do VFO-B tocam juntos, cada um com o seu volume\n"
+                          "(o AF; com SHIFT, o AF2 = o volume do outro VFO).\n"
+                          "Desligado: só o VFO selecionado toca (o outro fica mudo).\n"
+                          "Também no indicador MON da tela.");
 }

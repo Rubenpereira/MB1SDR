@@ -62,6 +62,34 @@ Como mexer
  - Sem barra de titulo do Windows: arraste a tampa do radio para mover a janela;
    minimizar / maximizar / fechar ficam na tampa, a direita.
 
+Dois aparelhos (um dongle em cada VFO)
+ Com dois receptores - por exemplo dois RTL-TCP, um em HF e outro em VHF - o
+ VFO-A pode usar um e o VFO-B o outro, os dois recebendo ao mesmo tempo:
+ 1. MENU > Configuracao > "VFO-B (segundo aparelho)": marque "VFO-B com
+    aparelho proprio", escolha o tipo (RTL-TCP: IP e porta, ex. 192.168.0.20 e
+    8729; RTL-SDR / SDRplay: o dispositivo) e clique "Conectar o VFO-B".
+    O aparelho de cima da janela continua sendo o do VFO-A.
+ 2. O POWER liga os dois. O escopo do VFO-B aparece ao lado (RX2 / Sub RX),
+    com a janela inteira do aparelho dele; o S-meter, o BUSY e o squelch de
+    cada VFO sao lidos no aparelho dele.
+ 3. Audio: por padrao os dois VFOs tocam juntos, cada um com o seu volume:
+    Na tela, ao lado de cada frequencia, um slider em pe e o volume daquele
+    VFO (A na esquerda, B na direita): arraste ou use a roda do mouse.
+    Os botoes da direita viram de dois receptores: em cima, a esquerda = AF A /
+    RF A (volume e RF do VFO-A); em cima, a direita = AF B / RF B; MULTI 1 =
+    SQL A (miolo) / SQL B (saia) - tudo para a esquerda = squelch aberto.
+    Valem sempre, ouvindo um ou outro VFO. (O SHIFT tambem pode ser a tecla
+    Shift do teclado do PC, enquanto segura.)
+    "Ouvir os dois VFOs ao mesmo tempo" (na Configuracao) ou o indicador MON da
+    tela (verde = os dois) deixa so o VFO selecionado tocando.
+    MON (tecla da esquerda) segurado: so o outro VFO toca.
+ 4. A/B, RX2 ou duplo clique no escopo do outro: o dial, os botoes e o
+    S-meter passam para o outro VFO (sem reconectar nada). Os decodificadores,
+    o radar e os satelites rodam no VFO ouvido (trocar de VFO fecha o
+    decodificador aberto).
+ A taxa de amostragem, o PPM, o AGC do dongle e o Bias-T sao os mesmos para os
+ dois; o RF, o modo, o filtro e o RIT sao de cada VFO.
+
 O painel, parte por parte
  Coluna da esquerda
    POWER ......... liga / desliga o radio (o dongle).

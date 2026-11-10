@@ -23,6 +23,7 @@ As DLLs do RTL-SDR já vêm junto. Para o dongle RTL-SDR no USB, instale uma vez
 - **Aparelhos:** RTL-SDR (USB), RTL-TCP (rede) e SDRplay (com a [API oficial](https://www.sdrplay.com/api/)), escolhidos na tecla ANT.
 - **Largura do escopo:** 0,25 / 1,024 / 1,4 / 1,8 / 1,92 / 2,048 / 2,4 / 2,56 / 2,88 / 3,2 MSPS, mais o zoom.
 - **ADS-B pela rede:** o Radar Aéreo também mostra os aviões de outro receptor da sua rede (FlightAware/PiAware, dump1090, readsb, FR24...) pela porta Beast 30005. O MB1SDR só lê, e o dongle fica livre.
+- **Dois aparelhos ao mesmo tempo:** o VFO-B pode ter o seu próprio dongle (por exemplo dois RTL-TCP, um em HF e outro em VHF). Os dois recebem juntos, o escopo do VFO-B fica ao lado e o áudio dos dois toca ao mesmo tempo, cada um com o seu volume (ou só o VFO selecionado). MENU > Configuração > VFO-B.
 - **Modos:** LSB, USB, CW, AM, FM estreito e FM largo - na caixa verde do modo, na tela, ou na tecla de toque MODE (F5).
 - **Cada botão faz a função do rádio.** Os de transmissão, que num receptor não servem, ganharam funções de recepção. Pare o mouse em cima de qualquer botão: a dica diz o que ele faz.
 - **SHIFT** (tecla WF): a segunda função dos botões duplos (VOX/COMP, TNF.P/TNF.W, NB1/NB2) e a segunda página das teclas de toque (AUTO, HOLD, CENTER, IF, RADAR, SAT, FULL, REC, PLAY, MENU).
